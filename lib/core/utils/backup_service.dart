@@ -79,6 +79,7 @@ class BackupService {
         'memorialDate': _lunarDateToJson(p.memorialDate),
         'note': p.note,
         'placeOfBirth': p.placeOfBirth,
+        'biography': p.biography,
         'createdAt': p.createdAt.toIso8601String(),
         'updatedAt': p.updatedAt.toIso8601String(),
       };
@@ -94,6 +95,7 @@ class BackupService {
         memorialDate: _lunarDateFromJson(json['memorialDate']),
         note: json['note'] as String?,
         placeOfBirth: json['placeOfBirth'] as String?,
+        biography: json['biography'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );

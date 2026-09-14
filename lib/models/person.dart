@@ -19,6 +19,7 @@ class Person {
     this.memorialDate,
     this.note,
     this.placeOfBirth,
+    this.biography,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,6 +34,7 @@ class Person {
     LunarDate? memorialDate,
     String? note,
     String? placeOfBirth,
+    String? biography,
   }) {
     final now = DateTime.now();
     return Person(
@@ -46,6 +48,7 @@ class Person {
       memorialDate: memorialDate,
       note: note,
       placeOfBirth: placeOfBirth,
+      biography: biography,
       createdAt: now,
       updatedAt: now,
     );
@@ -81,6 +84,11 @@ class Person {
   @HiveField(11)
   final DateTime updatedAt;
 
+  /// Tiểu sử dài — tách khỏi [note] ngắn, hiển thị dạng expandable/tab
+  /// riêng trong UI để không chiếm chỗ form chính.
+  @HiveField(12)
+  final String? biography;
+
   Person copyWith({
     String? fullName,
     Gender? gender,
@@ -93,6 +101,7 @@ class Person {
     bool clearMemorialDate = false,
     String? note,
     String? placeOfBirth,
+    String? biography,
   }) {
     return Person(
       id: id,
@@ -105,6 +114,7 @@ class Person {
       memorialDate: clearMemorialDate ? null : (memorialDate ?? this.memorialDate),
       note: note ?? this.note,
       placeOfBirth: placeOfBirth ?? this.placeOfBirth,
+      biography: biography ?? this.biography,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

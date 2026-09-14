@@ -31,7 +31,7 @@ class DesktopLandscapeFamilyTreeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => showSettingsModal(context),
+            onPressed: () => showSettingsModal(context, tree: tree),
           ),
         ],
       ),

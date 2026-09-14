@@ -44,7 +44,7 @@ class _MobilePortraitFamilyTreeScreenState extends State<MobilePortraitFamilyTre
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => showSettingsModal(context),
+            onPressed: () => showSettingsModal(context, tree: widget.tree),
           ),
         ],
       ),

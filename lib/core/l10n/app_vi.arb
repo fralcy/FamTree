@@ -98,12 +98,16 @@
   "languageVietnamese": "Tiếng Việt",
   "languageEnglish": "Tiếng Anh",
 
-  "backupTitle": "Sao lưu & Khôi phục",
-  "backupExport": "Xuất file sao lưu",
-  "backupImport": "Nhập file sao lưu",
-  "backupExportSuccess": "Đã xuất file sao lưu thành công.",
-  "backupImportSuccess": "Đã khôi phục dữ liệu thành công.",
-  "backupImportError": "Không thể đọc file sao lưu: {error}",
+  "backupTitle": "Xuất / Nhập gia phả",
+  "backupScopeHint": "Chỉ áp dụng cho gia phả \"{treeName}\" đang mở, không ảnh hưởng các gia phả khác.",
+  "@backupScopeHint": {
+    "placeholders": { "treeName": { "type": "String" } }
+  },
+  "backupExport": "Xuất file",
+  "backupImport": "Nhập file (ghi đè dữ liệu trùng)",
+  "backupExportSuccess": "Đã xuất file thành công.",
+  "backupImportSuccess": "Đã nhập dữ liệu vào gia phả thành công.",
+  "backupImportError": "Không thể đọc file: {error}",
   "@backupImportError": {
     "placeholders": { "error": { "type": "String" } }
   },

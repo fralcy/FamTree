@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers/family_tree_provider.dart';
+import '../../core/widgets/gender_dropdown.dart';
+import '../../core/widgets/lunar_date_field.dart';
+import '../../core/widgets/modal_shell.dart';
 import '../../models/index.dart';
 import '../responsive_screen.dart';
 
@@ -53,10 +56,10 @@ class _PersonFormContentState extends State<_PersonFormContent> {
       TextEditingController(text: widget.existing?.note);
 
   late Gender _gender = widget.existing?.gender ?? Gender.male;
-  late DateTime? _birthDate = widget.existing?.birthDate;
+  late LunarDate? _birthDate = widget.existing?.birthDate;
   late bool _isDeceased = widget.existing?.isDeceased ?? false;
-  late DateTime? _deathDate = widget.existing?.deathDate;
-  late DateTime? _memorialDate = widget.existing?.memorialDate;
+  late LunarDate? _deathDate = widget.existing?.deathDate;
+  late LunarDate? _memorialDate = widget.existing?.memorialDate;
 
   @override
   void dispose() {
@@ -64,16 +67,6 @@ class _PersonFormContentState extends State<_PersonFormContent> {
     _placeOfBirthController.dispose();
     _noteController.dispose();
     super.dispose();
-  }
-
-  Future<DateTime?> _pickDate(DateTime? initial) {
-    final now = DateTime.now();
-    return showDatePicker(
-      context: context,
-      initialDate: initial ?? DateTime(now.year - 30),
-      firstDate: DateTime(1850),
-      lastDate: now,
-    );
   }
 
   Future<void> _submit() async {
@@ -100,9 +93,12 @@ class _PersonFormContentState extends State<_PersonFormContent> {
         fullName: name,
         gender: _gender,
         birthDate: _birthDate,
+        clearBirthDate: _birthDate == null,
         isDeceased: _isDeceased,
         deathDate: _isDeceased ? _deathDate : null,
+        clearDeathDate: !_isDeceased || _deathDate == null,
         memorialDate: _isDeceased ? _memorialDate : null,
+        clearMemorialDate: !_isDeceased || _memorialDate == null,
         placeOfBirth: placeOfBirth.isEmpty ? null : placeOfBirth,
         note: note.isEmpty ? null : note,
       ));
@@ -113,103 +109,69 @@ class _PersonFormContentState extends State<_PersonFormContent> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final dateFormat = MaterialLocalizations.of(context).formatMediumDate;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.existing == null ? l10n.addPerson : l10n.editPerson,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: l10n.fullName),
-              validator: (value) =>
-                  (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
-              autofocus: true,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<Gender>(
-              initialValue: _gender,
-              decoration: InputDecoration(labelText: l10n.gender),
-              items: [
-                DropdownMenuItem(value: Gender.male, child: Text(l10n.genderMale)),
-                DropdownMenuItem(value: Gender.female, child: Text(l10n.genderFemale)),
-                DropdownMenuItem(value: Gender.other, child: Text(l10n.genderOther)),
-              ],
-              onChanged: (value) => setState(() => _gender = value ?? _gender),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.birthDate),
-              subtitle: Text(_birthDate != null ? dateFormat(_birthDate!) : '—'),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () async {
-                final picked = await _pickDate(_birthDate);
-                if (picked != null) setState(() => _birthDate = picked);
-              },
-            ),
-            TextFormField(
-              controller: _placeOfBirthController,
-              decoration: InputDecoration(labelText: l10n.placeOfBirth),
-            ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.isDeceased),
-              value: _isDeceased,
-              onChanged: (value) => setState(() => _isDeceased = value),
-            ),
-            if (_isDeceased) ...[
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.deathDate),
-                subtitle: Text(_deathDate != null ? dateFormat(_deathDate!) : '—'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await _pickDate(_deathDate);
-                  if (picked != null) setState(() => _deathDate = picked);
-                },
+    return Form(
+      key: _formKey,
+      child: ModalShell(
+        title: widget.existing == null ? l10n.addPerson : l10n.editPerson,
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+          FilledButton(onPressed: _submit, child: Text(l10n.save)),
+        ],
+        children: [
+          ResponsiveFieldRow(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(labelText: l10n.fullName, isDense: true),
+                validator: (value) =>
+                    (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
+                autofocus: true,
               ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.memorialDate),
-                subtitle: Text(_memorialDate != null ? dateFormat(_memorialDate!) : '—'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await _pickDate(_memorialDate);
-                  if (picked != null) setState(() => _memorialDate = picked);
-                },
+              GenderDropdown(
+                value: _gender,
+                onChanged: (value) => setState(() => _gender = value ?? _gender),
               ),
             ],
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _noteController,
-              decoration: InputDecoration(labelText: l10n.note),
-              maxLines: 3,
+          ),
+          LunarDateField(
+            label: l10n.birthDate,
+            value: _birthDate,
+            onChanged: (v) => setState(() => _birthDate = v),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _placeOfBirthController,
+            decoration: InputDecoration(labelText: l10n.placeOfBirth, isDense: true),
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.isDeceased),
+            value: _isDeceased,
+            onChanged: (value) => setState(() => _isDeceased = value),
+          ),
+          if (_isDeceased) ...[
+            const SizedBox(height: 8),
+            LunarDateField(
+              label: l10n.deathDate,
+              value: _deathDate,
+              onChanged: (v) => setState(() => _deathDate = v),
             ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n.cancel),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: _submit, child: Text(l10n.save)),
-              ],
+            const SizedBox(height: 12),
+            LunarDateField(
+              label: l10n.memorialDate,
+              value: _memorialDate,
+              onChanged: (v) => setState(() => _memorialDate = v),
             ),
           ],
-        ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _noteController,
+            decoration: InputDecoration(labelText: l10n.note, isDense: true),
+            maxLines: 3,
+          ),
+        ],
       ),
     );
   }

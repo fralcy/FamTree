@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers/family_tree_provider.dart';
+import '../../core/utils/lunar_date_formatter.dart';
 import '../../core/widgets/confirm_dialog.dart';
 import '../../models/index.dart';
 import '../responsive_screen.dart';
@@ -72,7 +73,6 @@ class _PersonDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final provider = context.watch<FamilyTreeProvider>();
-    final dateFormat = MaterialLocalizations.of(context).formatMediumDate;
 
     Person? person;
     for (final p in provider.persons) {
@@ -88,12 +88,14 @@ class _PersonDetailContent extends StatelessWidget {
     final children = provider.childrenOf(personId);
     final parents = provider.parentsOf(personId);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 560),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           Row(
             children: [
               Expanded(
@@ -118,14 +120,16 @@ class _PersonDetailContent extends StatelessWidget {
           ),
           Text('${l10n.gender}: ${_genderLabel(l10n, resolvedPerson.gender)}'),
           if (resolvedPerson.birthDate != null)
-            Text('${l10n.birthDate}: ${dateFormat(resolvedPerson.birthDate!)}'),
+            Text('${l10n.birthDate}: ${LunarDateFormatter.format(l10n, resolvedPerson.birthDate!)}'),
           if (resolvedPerson.placeOfBirth != null)
             Text('${l10n.placeOfBirth}: ${resolvedPerson.placeOfBirth}'),
           if (resolvedPerson.isDeceased) ...[
             if (resolvedPerson.deathDate != null)
-              Text('${l10n.deathDate}: ${dateFormat(resolvedPerson.deathDate!)}'),
+              Text('${l10n.deathDate}: ${LunarDateFormatter.format(l10n, resolvedPerson.deathDate!)}'),
             if (resolvedPerson.memorialDate != null)
-              Text('${l10n.memorialDate}: ${dateFormat(resolvedPerson.memorialDate!)}'),
+              Text(
+                '${l10n.memorialDate}: ${LunarDateFormatter.format(l10n, resolvedPerson.memorialDate!)}',
+              ),
           ],
           if (resolvedPerson.note != null) ...[
             const SizedBox(height: 8),
@@ -184,7 +188,8 @@ class _PersonDetailContent extends StatelessWidget {
               child: Text(l10n.close),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

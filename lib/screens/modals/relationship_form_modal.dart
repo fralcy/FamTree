@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers/family_tree_provider.dart';
+import '../../core/widgets/child_type_dropdown.dart';
+import '../../core/widgets/gender_dropdown.dart';
+import '../../core/widgets/lunar_date_field.dart';
+import '../../core/widgets/modal_shell.dart';
 import '../../models/index.dart';
 import '../responsive_screen.dart';
 
@@ -61,8 +65,8 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
   String? _selectedPersonId;
   Gender _newGender = Gender.male;
   ChildType _childType = ChildType.biological;
-  DateTime? _marriageStart;
-  DateTime? _marriageEnd;
+  LunarDate? _marriageStart;
+  LunarDate? _marriageEnd;
 
   @override
   void dispose() {
@@ -80,16 +84,6 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
       excludedIds.addAll(provider.parentsOf(widget.anchor.id).map((p) => p.id));
     }
     return provider.persons.where((p) => !excludedIds.contains(p.id)).toList();
-  }
-
-  Future<DateTime?> _pickDate(DateTime? initial) {
-    final now = DateTime.now();
-    return showDatePicker(
-      context: context,
-      initialDate: initial ?? now,
-      firstDate: DateTime(1850),
-      lastDate: now,
-    );
   }
 
   Future<void> _submit(FamilyTreeProvider provider) async {
@@ -153,115 +147,73 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     final l10n = AppLocalizations.of(context)!;
     final provider = context.watch<FamilyTreeProvider>();
     final selectable = _selectablePersons(provider);
-    final dateFormat = MaterialLocalizations.of(context).formatMediumDate;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(_titleFor(l10n), style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(value: false, label: Text(l10n.addPerson)),
-                ButtonSegment(value: true, label: Text(l10n.selectPerson)),
+    return Form(
+      key: _formKey,
+      child: ModalShell(
+        title: _titleFor(l10n),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => _submit(provider), child: Text(l10n.save)),
+        ],
+        children: [
+          SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(value: false, label: Text(l10n.addPerson)),
+              ButtonSegment(value: true, label: Text(l10n.selectPerson)),
+            ],
+            selected: {_useExisting},
+            onSelectionChanged: (selection) => setState(() => _useExisting = selection.first),
+          ),
+          const SizedBox(height: 12),
+          if (_useExisting)
+            DropdownButtonFormField<String>(
+              initialValue: _selectedPersonId,
+              decoration: InputDecoration(labelText: l10n.selectPerson, isDense: true),
+              items: [
+                for (final p in selectable) DropdownMenuItem(value: p.id, child: Text(p.fullName)),
               ],
-              selected: {_useExisting},
-              onSelectionChanged: (selection) =>
-                  setState(() => _useExisting = selection.first),
-            ),
-            const SizedBox(height: 12),
-            if (_useExisting)
-              DropdownButtonFormField<String>(
-                initialValue: _selectedPersonId,
-                decoration: InputDecoration(labelText: l10n.selectPerson),
-                items: [
-                  for (final p in selectable)
-                    DropdownMenuItem(value: p.id, child: Text(p.fullName)),
-                ],
-                onChanged: (value) => setState(() => _selectedPersonId = value),
-                validator: (value) => value == null ? l10n.fieldRequired : null,
-              )
-            else ...[
-              TextFormField(
-                controller: _newNameController,
-                decoration: InputDecoration(labelText: l10n.fullName),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<Gender>(
-                initialValue: _newGender,
-                decoration: InputDecoration(labelText: l10n.gender),
-                items: [
-                  DropdownMenuItem(value: Gender.male, child: Text(l10n.genderMale)),
-                  DropdownMenuItem(value: Gender.female, child: Text(l10n.genderFemale)),
-                  DropdownMenuItem(value: Gender.other, child: Text(l10n.genderOther)),
-                ],
-                onChanged: (value) => setState(() => _newGender = value ?? _newGender),
-              ),
-            ],
-            if (widget.kind != RelationshipModalKind.spouse) ...[
-              const SizedBox(height: 12),
-              DropdownButtonFormField<ChildType>(
-                initialValue: _childType,
-                decoration: InputDecoration(labelText: l10n.relationshipTypeParentChild),
-                items: [
-                  DropdownMenuItem(
-                    value: ChildType.biological,
-                    child: Text(l10n.childTypeBiological),
-                  ),
-                  DropdownMenuItem(
-                    value: ChildType.adopted,
-                    child: Text(l10n.childTypeAdopted),
-                  ),
-                  DropdownMenuItem(value: ChildType.step, child: Text(l10n.childTypeStep)),
-                ],
-                onChanged: (value) => setState(() => _childType = value ?? _childType),
-              ),
-            ],
-            if (widget.kind == RelationshipModalKind.spouse) ...[
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.marriageStartDate),
-                subtitle: Text(_marriageStart != null ? dateFormat(_marriageStart!) : '—'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await _pickDate(_marriageStart);
-                  if (picked != null) setState(() => _marriageStart = picked);
-                },
-              ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.marriageEndDate),
-                subtitle: Text(_marriageEnd != null ? dateFormat(_marriageEnd!) : '—'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await _pickDate(_marriageEnd);
-                  if (picked != null) setState(() => _marriageEnd = picked);
-                },
-              ),
-            ],
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              onChanged: (value) => setState(() => _selectedPersonId = value),
+              validator: (value) => value == null ? l10n.fieldRequired : null,
+            )
+          else
+            ResponsiveFieldRow(
               children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n.cancel),
+                TextFormField(
+                  controller: _newNameController,
+                  decoration: InputDecoration(labelText: l10n.fullName, isDense: true),
+                  validator: (value) =>
+                      (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
+                  autofocus: true,
                 ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: () => _submit(provider), child: Text(l10n.save)),
+                GenderDropdown(
+                  value: _newGender,
+                  onChanged: (value) => setState(() => _newGender = value ?? _newGender),
+                ),
               ],
+            ),
+          if (widget.kind != RelationshipModalKind.spouse) ...[
+            const SizedBox(height: 12),
+            ChildTypeDropdown(
+              value: _childType,
+              onChanged: (value) => setState(() => _childType = value ?? _childType),
             ),
           ],
-        ),
+          if (widget.kind == RelationshipModalKind.spouse) ...[
+            const SizedBox(height: 12),
+            LunarDateField(
+              label: l10n.marriageStartDate,
+              value: _marriageStart,
+              onChanged: (v) => setState(() => _marriageStart = v),
+            ),
+            const SizedBox(height: 12),
+            LunarDateField(
+              label: l10n.marriageEndDate,
+              value: _marriageEnd,
+              onChanged: (v) => setState(() => _marriageEnd = v),
+            ),
+          ],
+        ],
       ),
     );
   }

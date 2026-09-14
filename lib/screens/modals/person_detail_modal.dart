@@ -14,11 +14,15 @@ Future<void> showPersonDetailModal(
   BuildContext context, {
   required String familyTreeId,
   required String personId,
+  FamilyTreeProvider? provider,
 }) {
   final isDesktop = ResponsiveScreen.isDesktopSize(MediaQuery.sizeOf(context));
-  final provider = context.read<FamilyTreeProvider>();
+  // Cho phép truyền sẵn provider (dùng khi mở từ context của NavigatorState
+  // sau khi pop 1 modal khác — context đó nằm TRÊN nơi FamilyTreeProvider
+  // được inject nên context.read sẽ ném ProviderNotFoundException).
+  final resolvedProvider = provider ?? context.read<FamilyTreeProvider>();
   final content = ChangeNotifierProvider.value(
-    value: provider,
+    value: resolvedProvider,
     child: _PersonDetailContent(familyTreeId: familyTreeId, personId: personId),
   );
 
@@ -66,9 +70,15 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
   /// tiếp.
   void _navigateToPerson(BuildContext context, String personId) {
     final navigatorContext = Navigator.of(context).context;
+    final provider = context.read<FamilyTreeProvider>();
     Navigator.of(context).pop();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      showPersonDetailModal(navigatorContext, familyTreeId: widget.familyTreeId, personId: personId);
+      showPersonDetailModal(
+        navigatorContext,
+        familyTreeId: widget.familyTreeId,
+        personId: personId,
+        provider: provider,
+      );
     });
   }
 

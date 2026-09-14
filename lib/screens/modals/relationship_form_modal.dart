@@ -78,6 +78,9 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     super.dispose();
   }
 
+  /// Cấm hôn nhân đồng giới: khi thêm vợ/chồng, danh sách chọn CHỈ hiện
+  /// người khác giới với anchor (chọn người có sẵn cùng giới là vô nghĩa
+  /// vì sẽ không bao giờ lưu được — lọc luôn từ đầu thay vì báo lỗi sau).
   List<Person> _selectablePersons(FamilyTreeProvider provider) {
     final excludedIds = <String>{widget.anchor.id};
     if (widget.kind == RelationshipModalKind.spouse) {
@@ -87,7 +90,13 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     } else {
       excludedIds.addAll(provider.parentsOf(widget.anchor.id).map((p) => p.id));
     }
-    return provider.persons.where((p) => !excludedIds.contains(p.id)).toList();
+    return provider.persons.where((p) {
+      if (excludedIds.contains(p.id)) return false;
+      if (widget.kind == RelationshipModalKind.spouse) {
+        return p.gender != widget.anchor.gender;
+      }
+      return true;
+    }).toList();
   }
 
   /// Ràng buộc tối đa 2 cha/mẹ RUỘT khác giới tính cho 1 người. Chỉ áp
@@ -237,8 +246,12 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
                 ),
                 GenderDropdown(
                   value: _newGender,
-                  onChanged: (value) =>
-                      setState(() => _newGender = value ?? _newGender),
+                  // Vợ/chồng: giới tính đã bị buộc khác anchor, khoá không
+                  // cho sửa (tránh tạo được hôn nhân đồng giới qua đường
+                  // "thêm người mới").
+                  onChanged: widget.kind == RelationshipModalKind.spouse
+                      ? null
+                      : (value) => setState(() => _newGender = value ?? _newGender),
                 ),
               ],
             ),

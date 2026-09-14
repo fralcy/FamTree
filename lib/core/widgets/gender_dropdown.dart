@@ -9,7 +9,10 @@ class GenderDropdown extends StatelessWidget {
   const GenderDropdown({super.key, required this.value, required this.onChanged});
 
   final Gender value;
-  final ValueChanged<Gender?> onChanged;
+
+  /// null = khoá (không cho sửa) — dùng khi giới tính đã bị xác định sẵn
+  /// theo ràng buộc khác (vd vợ/chồng luôn phải khác giới với anchor).
+  final ValueChanged<Gender?>? onChanged;
 
   @override
   Widget build(BuildContext context) {

@@ -5,12 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _treeId = 't1';
 
-Person _person(String id, {Gender gender = Gender.male}) {
+Person _person(String id, {Gender gender = Gender.male, LunarDate? birthDate}) {
   return Person(
     id: id,
     familyTreeId: _treeId,
     fullName: id,
     gender: gender,
+    birthDate: birthDate,
     isDeceased: false,
     createdAt: DateTime(2024),
     updatedAt: DateTime(2024),
@@ -108,5 +109,91 @@ void main() {
       final gap = positions[row2[i]]!.dx - positions[row2[i - 1]]!.dx;
       expect(gap, greaterThanOrEqualTo(TreeLayoutCalculator.nodeSpacingX));
     }
+  });
+
+  test('anh chị em cùng hàng xếp theo ngày sinh (nhỏ tuổi hơn/sinh sau nằm bên phải)', () {
+    // Cố tình tạo theo thứ tự C, A, B (không theo ngày sinh) để chắc chắn
+    // kết quả không phải tình cờ trùng thứ tự tạo.
+    final persons = [
+      _person('C', birthDate: const LunarDate(day: 1, month: 1, year: 1990)),
+      _person('A', birthDate: const LunarDate(day: 1, month: 1, year: 1970)),
+      _person('B', birthDate: const LunarDate(day: 1, month: 1, year: 1980)),
+    ];
+    final generationMap =
+        GenerationService.computeGenerations(persons, []).generationOf;
+
+    final positions = TreeLayoutCalculator.computeNodePositions(persons, [], generationMap);
+
+    expect(positions['A']!.dx, lessThan(positions['B']!.dx));
+    expect(positions['B']!.dx, lessThan(positions['C']!.dx));
+  });
+
+  test('chồng luôn nằm bên trái vợ, kể cả khi vợ được duyệt tới trước', () {
+    // Cố tình liệt kê B (nữ) TRƯỚC A (nam) trong danh sách persons — nếu
+    // chỉ dựa vào thứ tự duyệt thì B sẽ thành "anchor" và nằm bên trái.
+    final b = _person('B', gender: Gender.female);
+    final a = _person('A');
+    final persons = [b, a];
+    final relationships = [
+      Relationship.createMarriage(familyTreeId: _treeId, personAId: 'A', personBId: 'B'),
+    ];
+    final generationMap =
+        GenerationService.computeGenerations(persons, relationships).generationOf;
+
+    final positions =
+        TreeLayoutCalculator.computeNodePositions(persons, relationships, generationMap);
+
+    expect(positions['A']!.dx, lessThan(positions['B']!.dx));
+  });
+
+  test(
+    'vợ/chồng married-in lớn tuổi hơn KHÔNG được kéo lệch thứ tự anh chị em ruột',
+    () {
+      // A (1970), B (1975), C (1980) là 3 anh chị em ruột (con của R).
+      // S là vợ/chồng của B nhưng SINH TRƯỚC CẢ A (1950, "married-in" —
+      // không có cha/mẹ nào trong cây) — chỉ nên kéo B đi cùng, không được
+      // đẩy cả cặp (B, S) lên vị trí đầu tiên do ngày sinh của S nhỏ nhất.
+      final r = _person('R');
+      final a = _person('A', birthDate: const LunarDate(day: 1, month: 1, year: 1970));
+      final b = _person('B', birthDate: const LunarDate(day: 1, month: 1, year: 1975));
+      final c = _person('C', birthDate: const LunarDate(day: 1, month: 1, year: 1980));
+      final s = _person(
+        'S',
+        gender: Gender.female,
+        birthDate: const LunarDate(day: 1, month: 1, year: 1950),
+      );
+      final persons = [r, a, b, c, s];
+      final relationships = [
+        Relationship.createParentChild(familyTreeId: _treeId, parentId: 'R', childId: 'A'),
+        Relationship.createParentChild(familyTreeId: _treeId, parentId: 'R', childId: 'B'),
+        Relationship.createParentChild(familyTreeId: _treeId, parentId: 'R', childId: 'C'),
+        Relationship.createMarriage(familyTreeId: _treeId, personAId: 'B', personBId: 'S'),
+      ];
+      final generationMap =
+          GenerationService.computeGenerations(persons, relationships).generationOf;
+
+      final positions =
+          TreeLayoutCalculator.computeNodePositions(persons, relationships, generationMap);
+
+      expect(positions['A']!.dx, lessThan(positions['B']!.dx));
+      expect(positions['B']!.dx, lessThan(positions['C']!.dx));
+    },
+  );
+
+  test('người chưa rõ ngày sinh xếp sau cùng, giữ nguyên thứ tự tạo với nhau', () {
+    // D không có ngày sinh, tạo trước E (cũng không có ngày sinh) — cả 2
+    // phải nằm SAU A (có ngày sinh), và D vẫn đứng trước E.
+    final persons = [
+      _person('D'),
+      _person('E'),
+      _person('A', birthDate: const LunarDate(day: 1, month: 1, year: 1970)),
+    ];
+    final generationMap =
+        GenerationService.computeGenerations(persons, []).generationOf;
+
+    final positions = TreeLayoutCalculator.computeNodePositions(persons, [], generationMap);
+
+    expect(positions['A']!.dx, lessThan(positions['D']!.dx));
+    expect(positions['D']!.dx, lessThan(positions['E']!.dx));
   });
 }

@@ -40,7 +40,11 @@ class TreeLayoutCalculator {
       final peopleInGen = byGeneration[gen]!;
       // Cụm [người-vợ/chồng] cạnh nhau trong thứ tự duyệt — giữ nguyên ý
       // định hiển thị 1 cặp sát nhau kể cả khi phải tính lại vị trí X.
-      final ordered = _clusterBySpouse(peopleInGen, persons, relationships);
+      final ordered = _clusterBySpouse(
+        _sortForRow(peopleInGen, persons, relationships),
+        persons,
+        relationships,
+      );
 
       final desiredX = <String, double>{};
 
@@ -90,6 +94,58 @@ class TreeLayoutCalculator {
     return positions;
   }
 
+  /// Chỉ dùng ngày sinh của người TRỰC HỆ (có cha/mẹ ghi nhận trong cây) để
+  /// quyết định thứ tự hàng — vợ/chồng "married-in" (không có cha/mẹ trong
+  /// cây) KHÔNG được dùng ngày sinh riêng để tự kéo cặp đi đâu cả, tránh
+  /// trường hợp 1 người rể/dâu lớn tuổi hơn làm lệch thứ tự anh/chị/em ruột
+  /// của người kia. Vợ/chồng vẫn được _clusterBySpouse cụm cạnh người trực
+  /// hệ như cũ — chỉ không tham gia bước SẮP THỨ TỰ này.
+  static List<Person> _sortForRow(
+    List<Person> peopleInGen,
+    List<Person> persons,
+    List<Relationship> relationships,
+  ) {
+    final core = <Person>[];
+    final others = <Person>[];
+    for (final p in peopleInGen) {
+      final hasParent =
+          FamilyRelationshipService.parentsOf(p.id, persons, relationships).isNotEmpty;
+      (hasParent ? core : others).add(p);
+    }
+    if (core.isEmpty) {
+      // Không ai trong hàng có cha/mẹ ghi nhận (vd đời gốc/tổ tiên đầu
+      // tiên) — không có cơ sở phân biệt trực hệ với "married-in", coi tất
+      // cả là trực hệ để vẫn sắp theo ngày sinh bình thường thay vì bỏ qua
+      // hẳn ngày sinh của mọi người trong hàng.
+      return _sortByBirthDate(peopleInGen);
+    }
+    return [..._sortByBirthDate(core), ...others];
+  }
+
+  /// Người cùng hàng: có ngày sinh thì xếp theo ngày sinh (nhỏ → lớn, anh/
+  /// chị lớn bên trái) trước, chưa rõ ngày sinh thì xếp SAU CÙNG (theo
+  /// đúng thứ tự đã tạo/nhập giữa họ với nhau) — không xen kẽ người chưa rõ
+  /// ngày vào giữa người đã biết ngày để tránh so sánh "đã biết vs chưa
+  /// biết" (không có nghĩa, có thể phá tính bắc cầu của thứ tự sắp xếp).
+  static List<Person> _sortByBirthDate(List<Person> people) {
+    final indexOf = {for (var i = 0; i < people.length; i++) people[i].id: i};
+    return people.toList()
+      ..sort((a, b) {
+        final aDate = a.birthDate;
+        final bDate = b.birthDate;
+        if (aDate != null && bDate != null) {
+          final cmp = aDate.compareTo(bDate);
+          if (cmp != 0) return cmp;
+        } else if ((aDate != null) != (bDate != null)) {
+          return aDate != null ? -1 : 1;
+        }
+        return indexOf[a.id]!.compareTo(indexOf[b.id]!);
+      });
+  }
+
+  /// Trong từng cụm vợ/chồng, LUÔN xếp nam bên trái nữ (đa thê/đa phu thì
+  /// người còn lại xếp bên phải theo thứ tự duyệt) — bất kể ai được duyệt
+  /// tới trước trong [peopleInGen].
   static List<Person> _clusterBySpouse(
     List<Person> peopleInGen,
     List<Person> persons,
@@ -99,15 +155,18 @@ class TreeLayoutCalculator {
     final remaining = {for (final p in peopleInGen) p.id: p};
     for (final p in peopleInGen) {
       if (!remaining.containsKey(p.id)) continue;
-      ordered.add(remaining.remove(p.id)!);
-      final spouses = FamilyRelationshipService.spousesOf(p.id, persons, relationships);
-      for (final spouse in spouses) {
-        final stillRemaining = remaining.remove(spouse.id);
-        if (stillRemaining != null) ordered.add(stillRemaining);
-      }
+      remaining.remove(p.id);
+      final spouses = FamilyRelationshipService.spousesOf(p.id, persons, relationships)
+          .map((s) => remaining.remove(s.id))
+          .whereType<Person>();
+      final cluster = [p, ...spouses]
+        ..sort((a, b) => _genderRank(a.gender).compareTo(_genderRank(b.gender)));
+      ordered.addAll(cluster);
     }
     return ordered;
   }
+
+  static int _genderRank(Gender gender) => gender == Gender.male ? 0 : 1;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

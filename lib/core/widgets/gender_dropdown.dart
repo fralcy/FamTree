@@ -20,7 +20,6 @@ class GenderDropdown extends StatelessWidget {
       items: [
         DropdownMenuItem(value: Gender.male, child: Text(l10n.genderMale)),
         DropdownMenuItem(value: Gender.female, child: Text(l10n.genderFemale)),
-        DropdownMenuItem(value: Gender.other, child: Text(l10n.genderOther)),
       ],
       onChanged: onChanged,
     );

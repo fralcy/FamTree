@@ -1,7 +1,97 @@
 {
   "@@locale": "vi",
   "appTitle": "Gia Phả",
-  "@appTitle": {
-    "description": "Tên ứng dụng"
-  }
+  "@appTitle": { "description": "Tên ứng dụng" },
+
+  "treeListTitle": "Danh sách cây gia phả",
+  "treeListEmpty": "Chưa có cây gia phả nào. Nhấn + để tạo cây mới.",
+  "createTree": "Tạo cây mới",
+  "editTree": "Sửa thông tin cây",
+  "deleteTree": "Xoá cây",
+  "deleteTreeConfirm": "Xoá cây \"{name}\" sẽ xoá toàn bộ người và quan hệ trong cây này. Không thể hoàn tác.",
+  "@deleteTreeConfirm": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "treeName": "Tên cây gia phả",
+  "treeDescription": "Mô tả (không bắt buộc)",
+
+  "familyTreeViewTitle": "{name}",
+  "@familyTreeViewTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "viewDiagram": "Xem sơ đồ",
+  "viewList": "Xem danh sách",
+  "generationLabel": "Đời {gen}",
+  "@generationLabel": {
+    "placeholders": { "gen": { "type": "int" } }
+  },
+  "personListEmpty": "Chưa có ai trong cây này. Nhấn + để thêm người đầu tiên.",
+
+  "addPerson": "Thêm người",
+  "editPerson": "Sửa thông tin",
+  "deletePerson": "Xoá người này",
+  "deletePersonConfirm": "Xoá \"{name}\" khỏi cây gia phả? Mọi quan hệ liên quan cũng sẽ bị xoá.",
+  "@deletePersonConfirm": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "deletePersonOrphanWarning": "{name} sẽ mất liên kết cha/mẹ vì đây là cha/mẹ duy nhất được ghi nhận.",
+  "@deletePersonOrphanWarning": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "fullName": "Họ và tên",
+  "gender": "Giới tính",
+  "genderMale": "Nam",
+  "genderFemale": "Nữ",
+  "genderOther": "Khác",
+  "birthDate": "Ngày sinh",
+  "placeOfBirth": "Nơi sinh",
+  "isDeceased": "Đã mất",
+  "deathDate": "Ngày mất",
+  "memorialDate": "Ngày giỗ",
+  "note": "Ghi chú",
+
+  "personDetailTitle": "Thông tin chi tiết",
+  "spouses": "Vợ/chồng",
+  "children": "Con cái",
+  "parents": "Cha/mẹ",
+  "noSpouses": "Chưa có vợ/chồng",
+  "noChildren": "Chưa có con",
+  "noParents": "Chưa rõ cha/mẹ",
+  "addSpouse": "Thêm vợ/chồng",
+  "addChild": "Thêm con",
+  "addParent": "Thêm cha/mẹ",
+
+  "relationshipTypeMarriage": "Hôn nhân",
+  "relationshipTypeParentChild": "Cha/mẹ - con",
+  "childTypeBiological": "Con ruột",
+  "childTypeAdopted": "Con nuôi",
+  "childTypeStep": "Con riêng",
+  "marriageStartDate": "Ngày cưới",
+  "marriageEndDate": "Ngày kết thúc (ly hôn/qua đời)",
+  "selectPerson": "Chọn người",
+  "editRelationship": "Sửa quan hệ",
+  "deleteRelationship": "Xoá quan hệ",
+
+  "settingsTitle": "Cài đặt",
+  "settingsTheme": "Giao diện",
+  "settingsLanguage": "Ngôn ngữ",
+  "languageVietnamese": "Tiếng Việt",
+  "languageEnglish": "Tiếng Anh",
+
+  "backupTitle": "Sao lưu & Khôi phục",
+  "backupExport": "Xuất file sao lưu",
+  "backupImport": "Nhập file sao lưu",
+  "backupExportSuccess": "Đã xuất file sao lưu thành công.",
+  "backupImportSuccess": "Đã khôi phục dữ liệu thành công.",
+  "backupImportError": "Không thể đọc file sao lưu: {error}",
+  "@backupImportError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "save": "Lưu",
+  "cancel": "Huỷ",
+  "delete": "Xoá",
+  "confirm": "Xác nhận",
+  "close": "Đóng",
+  "fieldRequired": "Vui lòng nhập thông tin này"
 }

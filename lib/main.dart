@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'core/l10n/app_localizations.dart';
 import 'core/providers/family_tree_list_provider.dart';
 import 'core/providers/settings_provider.dart';
 import 'core/utils/data_manager.dart';
+import 'screens/responsive_app_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +38,8 @@ class _ThemedApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeConfig = context.watch<SettingsProvider>().themeConfig;
+    final settings = context.watch<SettingsProvider>();
+    final themeConfig = settings.themeConfig;
     return MaterialApp(
       title: 'Fam Tree',
       theme: ThemeData(
@@ -45,7 +49,15 @@ class _ThemedApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const Scaffold(body: Center(child: Text('Fam Tree'))),
+      locale: Locale(settings.languageCode),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const ResponsiveAppScreen(),
     );
   }
 }

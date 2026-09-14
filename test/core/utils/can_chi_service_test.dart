@@ -17,4 +17,14 @@ void main() {
   test('yearLabel gồm cả tên Can Chi và số năm', () {
     expect(CanChiService.yearLabel(1984), 'Giáp Tý (1984)');
   });
+
+  test('tên tiếng Anh ghép đúng hành + âm dương + con vật', () {
+    expect(CanChiService.canChiForYearEn(1984), 'Yang Wood Rat');
+    expect(CanChiService.canChiForYearEn(2024), 'Yang Wood Dragon');
+    expect(CanChiService.canChiForYearEn(2025), 'Yin Wood Snake');
+  });
+
+  test('yearLabel trả tiếng Anh khi languageCode = en', () {
+    expect(CanChiService.yearLabel(1984, languageCode: 'en'), 'Yang Wood Rat (1984)');
+  });
 }

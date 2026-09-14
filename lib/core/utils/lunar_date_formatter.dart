@@ -6,8 +6,9 @@ import 'can_chi_service.dart';
 class LunarDateFormatter {
   const LunarDateFormatter._();
 
-  static String format(AppLocalizations l10n, LunarDate date) {
+  static String format(AppLocalizations l10n, LunarDate date, {String languageCode = 'vi'}) {
     final leapSuffix = date.isLeapMonth ? ' (${l10n.leapMonth})' : '';
-    return '${date.day}/${date.month}$leapSuffix - ${CanChiService.yearLabel(date.year)}';
+    final yearLabel = CanChiService.yearLabel(date.year, languageCode: languageCode);
+    return '${date.day}/${date.month}$leapSuffix - $yearLabel';
   }
 }

@@ -107,6 +107,7 @@ class _LunarDateFieldState extends State<LunarDateField> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
     final hasAny = _day != null || _month != null || _year != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +128,7 @@ class _LunarDateFieldState extends State<LunarDateField> {
             final fields = [
               _buildDayDropdown(l10n),
               _buildMonthDropdown(l10n),
-              _buildYearField(l10n),
+              _buildYearField(l10n, languageCode),
             ];
             if (constraints.maxWidth < 360) {
               return Column(
@@ -215,22 +216,21 @@ class _LunarDateFieldState extends State<LunarDateField> {
   /// Gõ số năm hoặc tên Can Chi để lọc nhanh, thay vì cuộn dropdown ~125
   /// mục — vẫn ưu tiên chọn từ danh sách gợi ý, nhưng gõ trực tiếp 1 năm
   /// xa hơn (tổ tiên nhiều đời trước) rồi Enter cũng được chấp nhận.
-  Widget _buildYearField(AppLocalizations l10n) {
+  Widget _buildYearField(AppLocalizations l10n, String languageCode) {
     final years = _years();
+    String label(int y) => CanChiService.yearLabel(y, languageCode: languageCode);
+
     return Autocomplete<int>(
-      key: ValueKey('year-$_resetGeneration'),
-      initialValue: TextEditingValue(
-        text: _year != null ? CanChiService.yearLabel(_year!) : '',
-      ),
+      key: ValueKey('year-$_resetGeneration-$languageCode'),
+      initialValue: TextEditingValue(text: _year != null ? label(_year!) : ''),
       optionsBuilder: (textEditingValue) {
         final query = textEditingValue.text.trim().toLowerCase();
         if (query.isEmpty) return years;
         return years.where((y) {
-          return y.toString().contains(query) ||
-              CanChiService.yearLabel(y).toLowerCase().contains(query);
+          return y.toString().contains(query) || label(y).toLowerCase().contains(query);
         });
       },
-      displayStringForOption: CanChiService.yearLabel,
+      displayStringForOption: label,
       onSelected: (y) => _update(year: y),
       fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
         return TextFormField(
@@ -241,7 +241,7 @@ class _LunarDateFieldState extends State<LunarDateField> {
             final typedYear = int.tryParse(text.trim());
             if (typedYear != null && typedYear >= 1000 && typedYear <= 2200) {
               _update(year: typedYear);
-              controller.text = CanChiService.yearLabel(typedYear);
+              controller.text = label(typedYear);
             }
             onFieldSubmitted();
           },
@@ -264,7 +264,7 @@ class _LunarDateFieldState extends State<LunarDateField> {
                   final option = optionList[index];
                   return ListTile(
                     dense: true,
-                    title: Text(CanChiService.yearLabel(option)),
+                    title: Text(label(option)),
                     onTap: () => onSelected(option),
                   );
                 },

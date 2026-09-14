@@ -72,6 +72,7 @@ class _PersonDetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
     final provider = context.watch<FamilyTreeProvider>();
 
     Person? person;
@@ -120,15 +121,22 @@ class _PersonDetailContent extends StatelessWidget {
           ),
           Text('${l10n.gender}: ${_genderLabel(l10n, resolvedPerson.gender)}'),
           if (resolvedPerson.birthDate != null)
-            Text('${l10n.birthDate}: ${LunarDateFormatter.format(l10n, resolvedPerson.birthDate!)}'),
+            Text(
+              '${l10n.birthDate}: '
+              '${LunarDateFormatter.format(l10n, resolvedPerson.birthDate!, languageCode: languageCode)}',
+            ),
           if (resolvedPerson.placeOfBirth != null)
             Text('${l10n.placeOfBirth}: ${resolvedPerson.placeOfBirth}'),
           if (resolvedPerson.isDeceased) ...[
             if (resolvedPerson.deathDate != null)
-              Text('${l10n.deathDate}: ${LunarDateFormatter.format(l10n, resolvedPerson.deathDate!)}'),
+              Text(
+                '${l10n.deathDate}: '
+                '${LunarDateFormatter.format(l10n, resolvedPerson.deathDate!, languageCode: languageCode)}',
+              ),
             if (resolvedPerson.memorialDate != null)
               Text(
-                '${l10n.memorialDate}: ${LunarDateFormatter.format(l10n, resolvedPerson.memorialDate!)}',
+                '${l10n.memorialDate}: '
+                '${LunarDateFormatter.format(l10n, resolvedPerson.memorialDate!, languageCode: languageCode)}',
               ),
           ],
           if (resolvedPerson.note != null) ...[

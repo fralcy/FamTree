@@ -16,7 +16,6 @@ class Person {
     required this.isDeceased,
     this.deathDate,
     this.memorialDate,
-    this.photoPath,
     this.note,
     this.placeOfBirth,
     required this.createdAt,
@@ -31,7 +30,6 @@ class Person {
     bool isDeceased = false,
     DateTime? deathDate,
     DateTime? memorialDate,
-    String? photoPath,
     String? note,
     String? placeOfBirth,
   }) {
@@ -45,7 +43,6 @@ class Person {
       isDeceased: isDeceased,
       deathDate: deathDate,
       memorialDate: memorialDate,
-      photoPath: photoPath,
       note: note,
       placeOfBirth: placeOfBirth,
       createdAt: now,
@@ -74,16 +71,13 @@ class Person {
   @HiveField(7)
   final DateTime? memorialDate;
 
-  /// Đường dẫn file trong thư mục tài liệu của app — không lưu bytes ảnh.
   @HiveField(8)
-  final String? photoPath;
-  @HiveField(9)
   final String? note;
-  @HiveField(10)
+  @HiveField(9)
   final String? placeOfBirth;
-  @HiveField(11)
+  @HiveField(10)
   final DateTime createdAt;
-  @HiveField(12)
+  @HiveField(11)
   final DateTime updatedAt;
 
   Person copyWith({
@@ -93,7 +87,6 @@ class Person {
     bool? isDeceased,
     DateTime? deathDate,
     DateTime? memorialDate,
-    String? photoPath,
     String? note,
     String? placeOfBirth,
   }) {
@@ -106,7 +99,6 @@ class Person {
       isDeceased: isDeceased ?? this.isDeceased,
       deathDate: deathDate ?? this.deathDate,
       memorialDate: memorialDate ?? this.memorialDate,
-      photoPath: photoPath ?? this.photoPath,
       note: note ?? this.note,
       placeOfBirth: placeOfBirth ?? this.placeOfBirth,
       createdAt: createdAt,

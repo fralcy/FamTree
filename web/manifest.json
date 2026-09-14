@@ -1,11 +1,11 @@
 {
-    "name": "fam_tree",
-    "short_name": "fam_tree",
+    "name": "Fam Tree",
+    "short_name": "Fam Tree",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Offline-first family tree manager.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

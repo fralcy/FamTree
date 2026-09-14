@@ -18,7 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Offline-first family tree manager.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -29,7 +29,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>fam_tree</title>
+  <title>Fam Tree</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -42,5 +42,23 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // GitHub Pages không cho set header cache-control, nên trình duyệt có
+    // thể giữ bản JS cũ dù đã deploy bản mới. Chạy đúng 1 lần mỗi khi mở
+    // app: so sánh "dấu vân tay" bootstrap script với lần mở trước, khác
+    // thì tự reload 1 lần rồi thôi — không polling, không banner.
+    (function () {
+      var KEY = 'fam_tree_bootstrap_fingerprint';
+      fetch(new URL('flutter_bootstrap.js', document.baseURI), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (fresh) {
+          if (fresh == null) return;
+          var stored = localStorage.getItem(KEY);
+          localStorage.setItem(KEY, fresh);
+          if (stored !== null && stored !== fresh) window.location.reload();
+        })
+        .catch(function () {});
+    })();
+  </script>
 </body>
 </html>

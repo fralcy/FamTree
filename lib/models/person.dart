@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import 'gender.dart';
+import 'lunar_date.dart';
 
 part 'person.g.dart';
 
@@ -26,10 +27,10 @@ class Person {
     required String familyTreeId,
     required String fullName,
     required Gender gender,
-    DateTime? birthDate,
+    LunarDate? birthDate,
     bool isDeceased = false,
-    DateTime? deathDate,
-    DateTime? memorialDate,
+    LunarDate? deathDate,
+    LunarDate? memorialDate,
     String? note,
     String? placeOfBirth,
   }) {
@@ -59,17 +60,17 @@ class Person {
   @HiveField(3)
   final Gender gender;
   @HiveField(4)
-  final DateTime? birthDate;
+  final LunarDate? birthDate;
   @HiveField(5)
   final bool isDeceased;
   @HiveField(6)
-  final DateTime? deathDate;
+  final LunarDate? deathDate;
 
   /// Ngày giỗ được gia đình chọn — có thể khác [deathDate] thực tế (ví dụ mất
   /// khi còn nhỏ hoặc mất tích). Chỉ là dữ liệu lưu trữ/hiển thị, không có
   /// tính năng nhắc nhở đi kèm.
   @HiveField(7)
-  final DateTime? memorialDate;
+  final LunarDate? memorialDate;
 
   @HiveField(8)
   final String? note;
@@ -83,10 +84,13 @@ class Person {
   Person copyWith({
     String? fullName,
     Gender? gender,
-    DateTime? birthDate,
+    LunarDate? birthDate,
+    bool clearBirthDate = false,
     bool? isDeceased,
-    DateTime? deathDate,
-    DateTime? memorialDate,
+    LunarDate? deathDate,
+    bool clearDeathDate = false,
+    LunarDate? memorialDate,
+    bool clearMemorialDate = false,
     String? note,
     String? placeOfBirth,
   }) {
@@ -95,10 +99,10 @@ class Person {
       familyTreeId: familyTreeId,
       fullName: fullName ?? this.fullName,
       gender: gender ?? this.gender,
-      birthDate: birthDate ?? this.birthDate,
+      birthDate: clearBirthDate ? null : (birthDate ?? this.birthDate),
       isDeceased: isDeceased ?? this.isDeceased,
-      deathDate: deathDate ?? this.deathDate,
-      memorialDate: memorialDate ?? this.memorialDate,
+      deathDate: clearDeathDate ? null : (deathDate ?? this.deathDate),
+      memorialDate: clearMemorialDate ? null : (memorialDate ?? this.memorialDate),
       note: note ?? this.note,
       placeOfBirth: placeOfBirth ?? this.placeOfBirth,
       createdAt: createdAt,

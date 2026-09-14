@@ -73,10 +73,10 @@ class BackupService {
         'familyTreeId': p.familyTreeId,
         'fullName': p.fullName,
         'gender': p.gender.name,
-        'birthDate': p.birthDate?.toIso8601String(),
+        'birthDate': _lunarDateToJson(p.birthDate),
         'isDeceased': p.isDeceased,
-        'deathDate': p.deathDate?.toIso8601String(),
-        'memorialDate': p.memorialDate?.toIso8601String(),
+        'deathDate': _lunarDateToJson(p.deathDate),
+        'memorialDate': _lunarDateToJson(p.memorialDate),
         'note': p.note,
         'placeOfBirth': p.placeOfBirth,
         'createdAt': p.createdAt.toIso8601String(),
@@ -88,10 +88,10 @@ class BackupService {
         familyTreeId: json['familyTreeId'] as String,
         fullName: json['fullName'] as String,
         gender: Gender.values.byName(json['gender'] as String),
-        birthDate: _parseNullableDate(json['birthDate']),
+        birthDate: _lunarDateFromJson(json['birthDate']),
         isDeceased: json['isDeceased'] as bool,
-        deathDate: _parseNullableDate(json['deathDate']),
-        memorialDate: _parseNullableDate(json['memorialDate']),
+        deathDate: _lunarDateFromJson(json['deathDate']),
+        memorialDate: _lunarDateFromJson(json['memorialDate']),
         note: json['note'] as String?,
         placeOfBirth: json['placeOfBirth'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
@@ -105,8 +105,8 @@ class BackupService {
         'personAId': r.personAId,
         'personBId': r.personBId,
         'childType': r.childType?.name,
-        'startDate': r.startDate?.toIso8601String(),
-        'endDate': r.endDate?.toIso8601String(),
+        'startDate': _lunarDateToJson(r.startDate),
+        'endDate': _lunarDateToJson(r.endDate),
         'note': r.note,
         'createdAt': r.createdAt.toIso8601String(),
         'updatedAt': r.updatedAt.toIso8601String(),
@@ -121,15 +121,27 @@ class BackupService {
         childType: json['childType'] != null
             ? ChildType.values.byName(json['childType'] as String)
             : null,
-        startDate: _parseNullableDate(json['startDate']),
-        endDate: _parseNullableDate(json['endDate']),
+        startDate: _lunarDateFromJson(json['startDate']),
+        endDate: _lunarDateFromJson(json['endDate']),
         note: json['note'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
 
-  static DateTime? _parseNullableDate(Object? value) =>
-      value == null ? null : DateTime.parse(value as String);
+  static Map<String, dynamic>? _lunarDateToJson(LunarDate? d) => d == null
+      ? null
+      : {'day': d.day, 'month': d.month, 'year': d.year, 'isLeapMonth': d.isLeapMonth};
+
+  static LunarDate? _lunarDateFromJson(Object? value) {
+    if (value == null) return null;
+    final json = value as Map<String, dynamic>;
+    return LunarDate(
+      day: json['day'] as int,
+      month: json['month'] as int,
+      year: json['year'] as int,
+      isLeapMonth: json['isLeapMonth'] as bool? ?? false,
+    );
+  }
 }
 
 class BackupPayload {

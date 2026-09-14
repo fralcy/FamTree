@@ -32,8 +32,8 @@ Relationship _parentChild(
 Relationship _marriage(
   String aId,
   String bId, {
-  DateTime? startDate,
-  DateTime? endDate,
+  LunarDate? startDate,
+  LunarDate? endDate,
 }) {
   return Relationship.createMarriage(
     familyTreeId: _treeId,
@@ -82,8 +82,13 @@ void main() {
       _person('D'), // con của A-B
     ];
     final relationships = [
-      _marriage('A', 'B', startDate: DateTime(1990), endDate: DateTime(2000)),
-      _marriage('A', 'C', startDate: DateTime(2005)),
+      _marriage(
+        'A',
+        'B',
+        startDate: const LunarDate(day: 1, month: 1, year: 1990),
+        endDate: const LunarDate(day: 1, month: 1, year: 2000),
+      ),
+      _marriage('A', 'C', startDate: const LunarDate(day: 1, month: 1, year: 2005)),
       _parentChild('A', 'D'),
     ];
 

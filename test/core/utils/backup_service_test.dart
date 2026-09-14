@@ -9,10 +9,10 @@ void main() {
       familyTreeId: tree.id,
       fullName: 'Trần Văn A',
       gender: Gender.male,
-      birthDate: DateTime(1950, 3, 1),
+      birthDate: const LunarDate(day: 1, month: 3, year: 1950),
       isDeceased: true,
-      deathDate: DateTime(2020, 1, 1),
-      memorialDate: DateTime(2020, 1, 3),
+      deathDate: const LunarDate(day: 1, month: 1, year: 2020),
+      memorialDate: const LunarDate(day: 3, month: 1, year: 2020),
     );
     final child = Person.create(
       familyTreeId: tree.id,
@@ -41,8 +41,8 @@ void main() {
     final restoredFather = restored.persons.firstWhere((p) => p.id == father.id);
     expect(restoredFather.fullName, 'Trần Văn A');
     expect(restoredFather.isDeceased, isTrue);
-    expect(restoredFather.deathDate, DateTime(2020, 1, 1));
-    expect(restoredFather.memorialDate, DateTime(2020, 1, 3));
+    expect(restoredFather.deathDate, const LunarDate(day: 1, month: 1, year: 2020));
+    expect(restoredFather.memorialDate, const LunarDate(day: 3, month: 1, year: 2020));
 
     expect(restored.relationships, hasLength(1));
     final restoredRel = restored.relationships.single;

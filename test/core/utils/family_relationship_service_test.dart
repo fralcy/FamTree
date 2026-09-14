@@ -27,14 +27,14 @@ void main() {
     familyTreeId: _treeId,
     personAId: a.id,
     personBId: b.id,
-    startDate: DateTime(1990),
-    endDate: DateTime(2000),
+    startDate: const LunarDate(day: 1, month: 1, year: 1990),
+    endDate: const LunarDate(day: 1, month: 1, year: 2000),
   );
   final marriage2 = Relationship.createMarriage(
     familyTreeId: _treeId,
     personAId: a.id,
     personBId: c.id,
-    startDate: DateTime(2005),
+    startDate: const LunarDate(day: 1, month: 1, year: 2005),
   );
   final parentChild = Relationship.createParentChild(
     familyTreeId: _treeId,

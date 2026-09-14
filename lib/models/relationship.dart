@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import 'child_type.dart';
+import 'lunar_date.dart';
 import 'relationship_type.dart';
 
 part 'relationship.g.dart';
@@ -34,8 +35,8 @@ class Relationship {
     required String familyTreeId,
     required String personAId,
     required String personBId,
-    DateTime? startDate,
-    DateTime? endDate,
+    LunarDate? startDate,
+    LunarDate? endDate,
     String? note,
   }) {
     final now = DateTime.now();
@@ -87,9 +88,9 @@ class Relationship {
   @HiveField(5)
   final ChildType? childType;
   @HiveField(6)
-  final DateTime? startDate;
+  final LunarDate? startDate;
   @HiveField(7)
-  final DateTime? endDate;
+  final LunarDate? endDate;
   @HiveField(8)
   final String? note;
   @HiveField(9)
@@ -99,8 +100,8 @@ class Relationship {
 
   Relationship copyWith({
     ChildType? childType,
-    DateTime? startDate,
-    DateTime? endDate,
+    LunarDate? startDate,
+    LunarDate? endDate,
     String? note,
   }) {
     return Relationship(

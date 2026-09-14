@@ -4,10 +4,12 @@ import '../../models/lunar_date.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/can_chi_service.dart';
 import '../utils/lunar_calendar_service.dart';
+import 'autocomplete_field.dart';
 
 /// Chọn ngày âm lịch tách 3 phần (KHÔNG dùng showDatePicker dương lịch):
 /// Ngày (1-30), Tháng (1-12, kèm cờ nhuận), Năm hiển thị bằng tên Can Chi
-/// tự tính từ số năm — người dùng chọn trong danh sách, không gõ tay.
+/// tự tính từ số năm — cả 3 đều dùng [AutocompleteField] (gõ để lọc) thay
+/// vì dropdown dài phải cuộn.
 ///
 /// Sau khi đủ 3 phần, hiển thị thêm chú thích ngày dương lịch quy đổi
 /// CHÍNH XÁC (không phải suy đoán cùng số năm) bằng [LunarCalendarService],
@@ -43,10 +45,10 @@ class _LunarDateFieldState extends State<LunarDateField> {
   int? _year;
   bool _isLeapMonth = false;
 
-  /// Đổi mỗi khi [_clear] được gọi — dùng làm key ép DropdownButtonFormField/
-  /// Autocomplete tạo lại instance mới, vì bản thân các widget đó chỉ đọc
-  /// initialValue ở lần build đầu (không tự đồng bộ lại khi cha rebuild với
-  /// giá trị mới), nên cần key đổi để "reset" hiển thị về rỗng.
+  /// Đổi mỗi khi [_clear] được gọi — dùng làm key ép AutocompleteField tạo
+  /// lại instance mới, vì bản thân Autocomplete chỉ đọc initialValue ở lần
+  /// build đầu (không tự đồng bộ lại khi cha rebuild với giá trị mới), nên
+  /// cần key đổi để "reset" hiển thị về rỗng.
   int _resetGeneration = 0;
 
   static final List<int> _days = List.generate(30, (i) => i + 1);
@@ -126,8 +128,8 @@ class _LunarDateFieldState extends State<LunarDateField> {
         LayoutBuilder(
           builder: (context, constraints) {
             final fields = [
-              _buildDayDropdown(l10n),
-              _buildMonthDropdown(l10n),
+              _buildDayField(l10n),
+              _buildMonthField(l10n),
               _buildYearField(l10n, languageCode),
             ];
             if (constraints.maxWidth < 360) {
@@ -180,98 +182,55 @@ class _LunarDateFieldState extends State<LunarDateField> {
     );
   }
 
-  Widget _buildDayDropdown(AppLocalizations l10n) {
-    return DropdownButtonFormField<int>(
+  Widget _buildDayField(AppLocalizations l10n) {
+    return AutocompleteField<int>(
       key: ValueKey('day-$_resetGeneration'),
+      label: l10n.lunarDay,
+      options: _days,
+      displayString: (d) => '$d',
       initialValue: _day,
-      decoration: InputDecoration(labelText: l10n.lunarDay, isDense: true),
-      items: [for (final d in _days) DropdownMenuItem(value: d, child: Text('$d'))],
-      onChanged: (d) => _update(day: d),
+      onSelected: (d) => _update(day: d),
     );
   }
 
-  Widget _buildMonthDropdown(AppLocalizations l10n) {
-    return DropdownButtonFormField<int>(
+  Widget _buildMonthField(AppLocalizations l10n) {
+    return AutocompleteField<int>(
       key: ValueKey('month-$_resetGeneration'),
+      label: l10n.lunarMonth,
+      options: _months,
+      displayString: (m) => _isLeapMonth ? '$m (${l10n.leapMonth})' : '$m',
       initialValue: _month,
-      decoration: InputDecoration(
-        labelText: l10n.lunarMonth,
-        isDense: true,
-        suffixIcon: _month != null
-            ? IconButton(
-                icon: Icon(
-                  _isLeapMonth ? Icons.brightness_2 : Icons.brightness_2_outlined,
-                  size: 18,
-                ),
-                tooltip: l10n.leapMonth,
-                onPressed: () => _update(isLeapMonth: !_isLeapMonth),
-              )
-            : null,
-      ),
-      items: [for (final m in _months) DropdownMenuItem(value: m, child: Text('$m'))],
-      onChanged: (m) => _update(month: m),
+      onSelected: (m) => _update(month: m),
+      suffixIcon: _month != null
+          ? IconButton(
+              icon: Icon(
+                _isLeapMonth ? Icons.brightness_2 : Icons.brightness_2_outlined,
+                size: 18,
+              ),
+              tooltip: l10n.leapMonth,
+              onPressed: () => _update(isLeapMonth: !_isLeapMonth),
+            )
+          : null,
     );
   }
 
-  /// Gõ số năm hoặc tên Can Chi để lọc nhanh, thay vì cuộn dropdown ~125
+  /// Gõ số năm hoặc tên Can Chi để lọc nhanh, thay vì cuộn danh sách ~125
   /// mục — vẫn ưu tiên chọn từ danh sách gợi ý, nhưng gõ trực tiếp 1 năm
   /// xa hơn (tổ tiên nhiều đời trước) rồi Enter cũng được chấp nhận.
   Widget _buildYearField(AppLocalizations l10n, String languageCode) {
     final years = _years();
-    String label(int y) => CanChiService.yearLabel(y, languageCode: languageCode);
-
-    return Autocomplete<int>(
+    return AutocompleteField<int>(
       key: ValueKey('year-$_resetGeneration-$languageCode'),
-      initialValue: TextEditingValue(text: _year != null ? label(_year!) : ''),
-      optionsBuilder: (textEditingValue) {
-        final query = textEditingValue.text.trim().toLowerCase();
-        if (query.isEmpty) return years;
-        return years.where((y) {
-          return y.toString().contains(query) || label(y).toLowerCase().contains(query);
-        });
-      },
-      displayStringForOption: label,
+      label: l10n.lunarYear,
+      options: years,
+      displayString: (y) => CanChiService.yearLabel(y, languageCode: languageCode),
+      initialValue: _year,
       onSelected: (y) => _update(year: y),
-      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-        return TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          decoration: InputDecoration(labelText: l10n.lunarYear, isDense: true),
-          onFieldSubmitted: (text) {
-            final typedYear = int.tryParse(text.trim());
-            if (typedYear != null && typedYear >= 1000 && typedYear <= 2200) {
-              _update(year: typedYear);
-              controller.text = label(typedYear);
-            }
-            onFieldSubmitted();
-          },
-        );
-      },
-      optionsViewBuilder: (context, onSelected, options) {
-        final optionList = options.toList();
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(8),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 260, maxWidth: 280),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: optionList.length,
-                itemBuilder: (context, index) {
-                  final option = optionList[index];
-                  return ListTile(
-                    dense: true,
-                    title: Text(label(option)),
-                    onTap: () => onSelected(option),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
+      onSubmittedFreeText: (text) {
+        final typedYear = int.tryParse(text.trim());
+        if (typedYear != null && typedYear >= 1000 && typedYear <= 2200) {
+          _update(year: typedYear);
+        }
       },
     );
   }

@@ -137,7 +137,8 @@ class _DiagramEdgesPainter extends CustomPainter {
       ..strokeWidth = 2;
     final parentChildPaint = Paint()
       ..color = Colors.blueGrey
-      ..strokeWidth = 2;
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
 
     for (final r in relationships) {
       if (r.type == RelationshipType.marriage) {

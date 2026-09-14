@@ -192,6 +192,7 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
                 decoration: InputDecoration(labelText: l10n.fullName),
                 validator: (value) =>
                     (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
+                autofocus: true,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Gender>(

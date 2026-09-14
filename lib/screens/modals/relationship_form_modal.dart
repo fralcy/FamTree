@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers/family_tree_provider.dart';
+import '../../core/widgets/autocomplete_field.dart';
 import '../../core/widgets/child_type_dropdown.dart';
 import '../../core/widgets/gender_dropdown.dart';
 import '../../core/widgets/lunar_date_field.dart';
@@ -63,10 +64,13 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
 
   bool _useExisting = false;
   String? _selectedPersonId;
-  Gender _newGender = Gender.male;
+  late Gender _newGender = widget.kind == RelationshipModalKind.spouse
+      ? widget.anchor.gender.opposite
+      : Gender.male;
   ChildType _childType = ChildType.biological;
   LunarDate? _marriageStart;
   LunarDate? _marriageEnd;
+  String? _constraintError;
 
   @override
   void dispose() {
@@ -86,8 +90,49 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     return provider.persons.where((p) => !excludedIds.contains(p.id)).toList();
   }
 
-  Future<void> _submit(FamilyTreeProvider provider) async {
+  /// Ràng buộc tối đa 2 cha/mẹ RUỘT khác giới tính cho 1 người. Chỉ áp
+  /// dụng khi type=parentChild và childType=biological — con nuôi/con
+  /// riêng không giới hạn số lượng.
+  String? _validateBiologicalParentConstraint(FamilyTreeProvider provider, AppLocalizations l10n) {
+    if (widget.kind == RelationshipModalKind.spouse) return null;
+    if (_childType != ChildType.biological) return null;
+
+    final String? childId;
+    final Gender newParentGender;
+    if (widget.kind == RelationshipModalKind.parent) {
+      childId = widget.anchor.id;
+      newParentGender = _useExisting
+          ? provider.persons.firstWhere((p) => p.id == _selectedPersonId).gender
+          : _newGender;
+    } else {
+      // kind == child: anchor trở thành cha/mẹ của otherPerson.
+      if (_useExisting) {
+        childId = _selectedPersonId;
+      } else {
+        childId = null; // người con mới tạo, chắc chắn chưa có cha/mẹ nào.
+      }
+      newParentGender = widget.anchor.gender;
+    }
+    if (childId == null) return null;
+
+    final existingBioParents = provider.biologicalParentsOf(childId);
+    if (existingBioParents.length >= 2) {
+      return l10n.maxBiologicalParentsReached;
+    }
+    if (existingBioParents.any((p) => p.gender == newParentGender)) {
+      return l10n.biologicalParentsMustDifferGender;
+    }
+    return null;
+  }
+
+  Future<void> _submit(FamilyTreeProvider provider, AppLocalizations l10n) async {
     if (!_formKey.currentState!.validate()) return;
+
+    final constraintError = _validateBiologicalParentConstraint(provider, l10n);
+    if (constraintError != null) {
+      setState(() => _constraintError = constraintError);
+      return;
+    }
 
     String otherPersonId;
     if (_useExisting) {
@@ -154,7 +199,7 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
         title: _titleFor(l10n),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => _submit(provider), child: Text(l10n.save)),
+          FilledButton(onPressed: () => _submit(provider, l10n), child: Text(l10n.save)),
         ],
         children: [
           SegmentedButton<bool>(
@@ -163,18 +208,22 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
               ButtonSegment(value: true, label: Text(l10n.selectPerson)),
             ],
             selected: {_useExisting},
-            onSelectionChanged: (selection) => setState(() => _useExisting = selection.first),
+            onSelectionChanged: (selection) => setState(() {
+              _useExisting = selection.first;
+              _constraintError = null;
+            }),
           ),
           const SizedBox(height: 12),
           if (_useExisting)
-            DropdownButtonFormField<String>(
-              initialValue: _selectedPersonId,
-              decoration: InputDecoration(labelText: l10n.selectPerson, isDense: true),
-              items: [
-                for (final p in selectable) DropdownMenuItem(value: p.id, child: Text(p.fullName)),
-              ],
-              onChanged: (value) => setState(() => _selectedPersonId = value),
-              validator: (value) => value == null ? l10n.fieldRequired : null,
+            AutocompleteField<Person>(
+              label: l10n.selectPerson,
+              options: selectable,
+              displayString: (p) => p.fullName,
+              onSelected: (p) => setState(() {
+                _selectedPersonId = p.id;
+                _constraintError = null;
+              }),
+              validator: (_) => _selectedPersonId == null ? l10n.fieldRequired : null,
             )
           else
             ResponsiveFieldRow(
@@ -188,7 +237,8 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
                 ),
                 GenderDropdown(
                   value: _newGender,
-                  onChanged: (value) => setState(() => _newGender = value ?? _newGender),
+                  onChanged: (value) =>
+                      setState(() => _newGender = value ?? _newGender),
                 ),
               ],
             ),
@@ -196,7 +246,10 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
             const SizedBox(height: 12),
             ChildTypeDropdown(
               value: _childType,
-              onChanged: (value) => setState(() => _childType = value ?? _childType),
+              onChanged: (value) => setState(() {
+                _childType = value ?? _childType;
+                _constraintError = null;
+              }),
             ),
           ],
           if (widget.kind == RelationshipModalKind.spouse) ...[
@@ -211,6 +264,13 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
               label: l10n.marriageEndDate,
               value: _marriageEnd,
               onChanged: (v) => setState(() => _marriageEnd = v),
+            ),
+          ],
+          if (_constraintError != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _constraintError!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
         ],

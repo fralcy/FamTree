@@ -6,10 +6,14 @@ import 'family_relationship_service.dart';
 /// Tính toạ độ node cho sơ đồ cây — tách khỏi widget để unit test độc lập
 /// trước khi render (không phụ thuộc Flutter framework rendering).
 ///
-/// Hàng Y = generation. Vị trí X gom nhóm theo hộ gia đình: 1 người + vợ/
-/// chồng của họ nằm sát nhau, con cái xếp ngay dưới và căn giữa theo đoạn
-/// nối giữa cha mẹ. MVP chấp nhận vẫn có thể chồng chéo ở cây rất rộng/
-/// nhiều đời — không cần thuật toán chống chồng chéo hoàn hảo.
+/// Xử lý BOTTOM-UP theo từng generation (hàng Y), từ đời cuối lên đời gốc:
+/// vị trí X mong muốn của 1 người = trung bình vị trí X các CON đã có toạ
+/// độ CHỐT (ở hàng dưới, đã xử lý xong) — nhờ vậy cha/mẹ tự "căn giữa" theo
+/// TOÀN BỘ nhánh con cháu bên dưới thay vì chỉ nhìn 1 chiều từ trên xuống,
+/// giảm xô lệch tích luỹ qua nhiều đời. Người không có con (đời cuối, hoặc
+/// chưa ghi nhận con) dùng vị trí kề vợ/chồng hoặc thứ tự xuất hiện làm
+/// phương án dự phòng. Mỗi hàng đều được "quét" đảm bảo khoảng cách tối
+/// thiểu giữa các node liền kề để không chồng chéo.
 class TreeLayoutCalculator {
   const TreeLayoutCalculator._();
 
@@ -28,72 +32,84 @@ class TreeLayoutCalculator {
       final gen = generationMap[p.id] ?? 0;
       byGeneration.putIfAbsent(gen, () => []).add(p);
     }
-
-    final visitedInOrder = <String>{};
-    final orderedByGeneration = <int, List<Person>>{};
-
-    final sortedGenerations = byGeneration.keys.toList()..sort();
-    for (final gen in sortedGenerations) {
-      final peopleInGen = byGeneration[gen]!;
-      final ordered = <Person>[];
-      final remaining = {for (final p in peopleInGen) p.id: p};
-
-      // Gom cluster [người-vợ/chồng] cạnh nhau: duyệt từng người, nếu chưa
-      // xếp thì xếp luôn kèm theo vợ/chồng của họ (nếu vợ/chồng cùng
-      // generation này), rồi mới sang cặp tiếp theo.
-      for (final p in peopleInGen) {
-        if (!remaining.containsKey(p.id)) continue;
-        ordered.add(remaining.remove(p.id)!);
-        final spouses = FamilyRelationshipService.spousesOf(p.id, persons, relationships);
-        for (final spouse in spouses) {
-          final stillRemaining = remaining.remove(spouse.id);
-          if (stillRemaining != null) ordered.add(stillRemaining);
-        }
-      }
-      orderedByGeneration[gen] = ordered;
-      visitedInOrder.addAll(ordered.map((p) => p.id));
-    }
+    final sortedGenerationsDesc = byGeneration.keys.toList()..sort((a, b) => b.compareTo(a));
 
     final positions = <String, Offset>{};
-    for (final gen in sortedGenerations) {
-      final ordered = orderedByGeneration[gen]!;
-      for (var i = 0; i < ordered.length; i++) {
-        positions[ordered[i].id] = Offset(i * nodeSpacingX, gen * rowSpacingY);
-      }
-    }
 
-    // Căn giữa con cái theo đoạn nối cha mẹ: gom con theo cùng bộ cha/mẹ,
-    // đặt cả cụm anh chị em đó đối xứng quanh trung điểm X của cha/mẹ (giữ
-    // khoảng cách đều nhau giữa các anh chị em trong cùng cụm).
-    for (final gen in sortedGenerations) {
-      if (gen == sortedGenerations.first) continue;
-      final ordered = orderedByGeneration[gen]!;
+    for (final gen in sortedGenerationsDesc) {
+      final peopleInGen = byGeneration[gen]!;
+      // Cụm [người-vợ/chồng] cạnh nhau trong thứ tự duyệt — giữ nguyên ý
+      // định hiển thị 1 cặp sát nhau kể cả khi phải tính lại vị trí X.
+      final ordered = _clusterBySpouse(peopleInGen, persons, relationships);
 
-      final groups = <String, List<Person>>{};
-      for (final child in ordered) {
-        final parents = FamilyRelationshipService.parentsOf(child.id, persons, relationships);
-        if (parents.isEmpty) continue;
-        final key = (parents.map((p) => p.id).toList()..sort()).join(',');
-        groups.putIfAbsent(key, () => []).add(child);
-      }
+      final desiredX = <String, double>{};
 
-      for (final siblings in groups.values) {
-        final parents =
-            FamilyRelationshipService.parentsOf(siblings.first.id, persons, relationships);
-        final parentXs =
-            parents.map((p) => positions[p.id]?.dx).whereType<double>().toList();
-        if (parentXs.isEmpty) continue;
-        final centerX = parentXs.reduce((a, b) => a + b) / parentXs.length;
-
-        final n = siblings.length;
-        for (var i = 0; i < n; i++) {
-          final offsetX = (i - (n - 1) / 2) * nodeSpacingX;
-          final old = positions[siblings[i].id]!;
-          positions[siblings[i].id] = Offset(centerX + offsetX, old.dy);
+      // Bước 1: người có con đã định vị (hàng dưới) → trung bình X các con.
+      for (final p in ordered) {
+        final children = FamilyRelationshipService.childrenOf(p.id, persons, relationships);
+        final childXs = children.map((c) => positions[c.id]?.dx).whereType<double>().toList();
+        if (childXs.isNotEmpty) {
+          desiredX[p.id] = childXs.reduce((a, b) => a + b) / childXs.length;
         }
+      }
+
+      // Bước 2: người chưa có desiredX (không con/con chưa định vị) —
+      // bám theo vợ/chồng đã có desiredX (giữ cặp cạnh nhau), nếu không thì
+      // xếp tuần tự làm phương án dự phòng.
+      var fallbackCursor = 0.0;
+      for (final p in ordered) {
+        if (desiredX.containsKey(p.id)) continue;
+        final spouses = FamilyRelationshipService.spousesOf(p.id, persons, relationships);
+        final anchoredSpouse = spouses.where((s) => desiredX.containsKey(s.id)).firstOrNull;
+        desiredX[p.id] = anchoredSpouse != null ? desiredX[anchoredSpouse.id]! : fallbackCursor;
+        fallbackCursor += nodeSpacingX;
+      }
+
+      // Bước 3: sắp theo desiredX (tie-break theo thứ tự cụm để cặp vợ
+      // chồng cùng desiredX vẫn đứng cạnh nhau ổn định), rồi quét đảm bảo
+      // khoảng cách tối thiểu — chỉ đẩy sang phải, không chồng lên node đã
+      // chốt bên trái.
+      final indexOf = {for (var i = 0; i < ordered.length; i++) ordered[i].id: i};
+      final rowOrder = ordered.toList()
+        ..sort((a, b) {
+          final cmp = desiredX[a.id]!.compareTo(desiredX[b.id]!);
+          return cmp != 0 ? cmp : indexOf[a.id]!.compareTo(indexOf[b.id]!);
+        });
+
+      double? prevX;
+      for (final p in rowOrder) {
+        var x = desiredX[p.id]!;
+        if (prevX != null && x < prevX + nodeSpacingX) {
+          x = prevX + nodeSpacingX;
+        }
+        positions[p.id] = Offset(x, gen * rowSpacingY);
+        prevX = x;
       }
     }
 
     return positions;
   }
+
+  static List<Person> _clusterBySpouse(
+    List<Person> peopleInGen,
+    List<Person> persons,
+    List<Relationship> relationships,
+  ) {
+    final ordered = <Person>[];
+    final remaining = {for (final p in peopleInGen) p.id: p};
+    for (final p in peopleInGen) {
+      if (!remaining.containsKey(p.id)) continue;
+      ordered.add(remaining.remove(p.id)!);
+      final spouses = FamilyRelationshipService.spousesOf(p.id, persons, relationships);
+      for (final spouse in spouses) {
+        final stillRemaining = remaining.remove(spouse.id);
+        if (stillRemaining != null) ordered.add(stillRemaining);
+      }
+    }
+    return ordered;
+  }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

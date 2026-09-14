@@ -43,12 +43,26 @@
   "genderMale": "Nam",
   "genderFemale": "Nữ",
   "genderOther": "Khác",
-  "birthDate": "Ngày sinh",
+  "birthDate": "Ngày sinh (âm lịch)",
   "placeOfBirth": "Nơi sinh",
   "isDeceased": "Đã mất",
-  "deathDate": "Ngày mất",
-  "memorialDate": "Ngày giỗ",
+  "deathDate": "Ngày mất (âm lịch)",
+  "memorialDate": "Ngày giỗ (âm lịch)",
   "note": "Ghi chú",
+  "lunarDay": "Ngày",
+  "lunarMonth": "Tháng",
+  "lunarYear": "Năm",
+  "leapMonth": "Nhuận",
+  "clearDate": "Xoá ngày",
+  "solarDateAnnotation": "Dương lịch: {day}/{month}/{year}",
+  "@solarDateAnnotation": {
+    "placeholders": {
+      "day": { "type": "String" },
+      "month": { "type": "String" },
+      "year": { "type": "int" }
+    }
+  },
+  "invalidLunarDate": "Ngày âm lịch không hợp lệ (tháng thiếu chỉ có 29 ngày, hoặc năm này không có tháng nhuận đã chọn)",
 
   "personDetailTitle": "Thông tin chi tiết",
   "spouses": "Vợ/chồng",

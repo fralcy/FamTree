@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers/family_tree_list_provider.dart';
+import '../../core/widgets/modal_shell.dart';
 import '../../models/index.dart';
 import '../responsive_screen.dart';
 
@@ -70,45 +71,29 @@ class _FamilyTreeFormContentState extends State<_FamilyTreeFormContent> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.existing == null ? l10n.createTree : l10n.editTree,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: l10n.treeName),
-              validator: (value) =>
-                  (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
-              autofocus: true,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(labelText: l10n.treeDescription),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n.cancel),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: _submit, child: Text(l10n.save)),
-              ],
-            ),
-          ],
-        ),
+    return Form(
+      key: _formKey,
+      child: ModalShell(
+        title: widget.existing == null ? l10n.createTree : l10n.editTree,
+        maxWidth: 440,
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+          FilledButton(onPressed: _submit, child: Text(l10n.save)),
+        ],
+        children: [
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: l10n.treeName, isDense: true),
+            validator: (value) =>
+                (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
+            autofocus: true,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _descriptionController,
+            decoration: InputDecoration(labelText: l10n.treeDescription, isDense: true),
+          ),
+        ],
       ),
     );
   }

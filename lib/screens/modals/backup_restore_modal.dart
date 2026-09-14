@@ -9,6 +9,7 @@ import '../../core/l10n/app_localizations.dart';
 import '../../core/providers/family_tree_list_provider.dart';
 import '../../core/utils/backup_service.dart';
 import '../../core/utils/data_manager.dart';
+import '../../core/widgets/modal_shell.dart';
 import '../responsive_screen.dart';
 
 Future<void> showBackupRestoreModal(BuildContext context) {
@@ -96,27 +97,22 @@ class _BackupRestoreContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l10n.backupTitle, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () => _export(context),
-            icon: const Icon(Icons.upload_file),
-            label: Text(l10n.backupExport),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => _import(context),
-            icon: const Icon(Icons.download),
-            label: Text(l10n.backupImport),
-          ),
-        ],
-      ),
+    return ModalShell(
+      title: l10n.backupTitle,
+      maxWidth: 440,
+      children: [
+        FilledButton.icon(
+          onPressed: () => _export(context),
+          icon: const Icon(Icons.upload_file),
+          label: Text(l10n.backupExport),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => _import(context),
+          icon: const Icon(Icons.download),
+          label: Text(l10n.backupImport),
+        ),
+      ],
     );
   }
 }

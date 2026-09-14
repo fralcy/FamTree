@@ -42,6 +42,7 @@ class DataManager {
       Hive.registerAdapter(RelationshipTypeAdapter());
     }
     if (!Hive.isAdapterRegistered(5)) Hive.registerAdapter(ChildTypeAdapter());
+    if (!Hive.isAdapterRegistered(6)) Hive.registerAdapter(LunarDateAdapter());
 
     _familyTreeBox = await Hive.openBox<FamilyTree>('family_trees');
     _personBox = await Hive.openBox<Person>('persons');

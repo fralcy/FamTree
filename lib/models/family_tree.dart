@@ -10,6 +10,7 @@ part 'family_tree.g.dart';
 /// 3 = Gender            (enum)
 /// 4 = RelationshipType  (enum)
 /// 5 = ChildType         (enum)
+/// 6 = LunarDate
 @HiveType(typeId: 0)
 class FamilyTree {
   FamilyTree({

@@ -220,6 +220,44 @@ class _DiagramEdgesPainter extends CustomPainter {
     return null;
   }
 
+  /// id trên cùng 1 hàng (cùng toạ độ Y), sắp theo X — dùng để biết 2 người
+  /// có đứng LIỀN KỀ nhau hay không (đa thê/đa phu/tái hôn khiến 1 người có
+  /// từ 2 vợ/chồng trở lên, người thứ 2 trở đi sẽ không liền kề người đầu).
+  Map<double, List<String>> get _rowIdsSortedByX {
+    final rows = <double, List<String>>{};
+    for (final id in positions.keys) {
+      rows.putIfAbsent(_center(id).dy, () => []).add(id);
+    }
+    for (final ids in rows.values) {
+      ids.sort((a, b) => _center(a).dx.compareTo(_center(b).dx));
+    }
+    return rows;
+  }
+
+  /// 2 người liền kề nhau trên hàng → 1 đường thẳng như cũ. KHÔNG liền kề
+  /// (có người khác chen ở giữa) → vòng qua phía trên hàng thay vì vẽ
+  /// xuyên thẳng qua node xen giữa (dễ nhầm là hôn nhân với người đó).
+  List<Offset> _marriageWaypoints(String aId, String bId) {
+    final aCenter = _center(aId);
+    final bCenter = _center(bId);
+    final row = _rowIdsSortedByX[aCenter.dy] ?? [aId, bId];
+    final indexA = row.indexOf(aId);
+    final indexB = row.indexOf(bId);
+    final adjacent = indexA != -1 && indexB != -1 && (indexA - indexB).abs() == 1;
+    if (adjacent) return [aCenter, bCenter];
+
+    final shelfY = aCenter.dy - nodeHeight / 2 - 16;
+    return [aCenter, Offset(aCenter.dx, shelfY), Offset(bCenter.dx, shelfY), bCenter];
+  }
+
+  /// Điểm neo cho đường nối con — trung điểm đường thẳng (trường hợp liền
+  /// kề) hoặc trung điểm đoạn ngang phía trên (trường hợp vòng qua).
+  Offset _marriageMidpoint(String aId, String bId) {
+    final points = _marriageWaypoints(aId, bId);
+    if (points.length == 2) return Offset.lerp(points[0], points[1], 0.5)!;
+    return Offset.lerp(points[1], points[2], 0.5)!;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final marriagePaint = Paint()
@@ -244,11 +282,14 @@ class _DiagramEdgesPainter extends CustomPainter {
 
     for (final r in relationships) {
       if (r.type == RelationshipType.marriage) {
+        final points = _marriageWaypoints(r.personAId, r.personBId);
         final ended = r.endDate != null;
-        if (ended) {
-          _drawDashedLine(canvas, _center(r.personAId), _center(r.personBId), marriagePaint);
-        } else {
-          canvas.drawLine(_center(r.personAId), _center(r.personBId), marriagePaint);
+        for (var i = 0; i < points.length - 1; i++) {
+          if (ended) {
+            _drawDashedLine(canvas, points[i], points[i + 1], marriagePaint);
+          } else {
+            canvas.drawLine(points[i], points[i + 1], marriagePaint);
+          }
         }
       }
     }
@@ -263,7 +304,7 @@ class _DiagramEdgesPainter extends CustomPainter {
 
     for (final entry in consolidatedChildToMarriage.entries) {
       final marriage = entry.value;
-      final midpoint = Offset.lerp(_center(marriage.personAId), _center(marriage.personBId), 0.5)!;
+      final midpoint = _marriageMidpoint(marriage.personAId, marriage.personBId);
       _drawParentChildPath(canvas, midpoint, _center(entry.key), parentChildPaint);
     }
   }

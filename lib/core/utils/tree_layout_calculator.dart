@@ -143,9 +143,12 @@ class TreeLayoutCalculator {
       });
   }
 
-  /// Trong từng cụm vợ/chồng, LUÔN xếp nam bên trái nữ (đa thê/đa phu thì
-  /// người còn lại xếp bên phải theo thứ tự duyệt) — bất kể ai được duyệt
-  /// tới trước trong [peopleInGen].
+  /// Trong từng cụm vợ/chồng, LUÔN xếp (các) chồng bên trái (các) vợ — đa
+  /// thê/đa phu/tái hôn thì nhiều người cùng phía được xếp theo đúng thứ
+  /// tự [Relationship.startDate] (cưới trước đứng gần người kia hơn), lấy
+  /// từ [FamilyRelationshipService.marriagesOf] đã sắp sẵn — KHÔNG dùng
+  /// `List.sort` để trộn nam/nữ vì sort của Dart không đảm bảo ổn định, có
+  /// thể xáo trộn mất thứ tự cưới trước/sau giữa những người cùng giới.
   static List<Person> _clusterBySpouse(
     List<Person> peopleInGen,
     List<Person> persons,
@@ -156,17 +159,14 @@ class TreeLayoutCalculator {
     for (final p in peopleInGen) {
       if (!remaining.containsKey(p.id)) continue;
       remaining.remove(p.id);
-      final spouses = FamilyRelationshipService.spousesOf(p.id, persons, relationships)
-          .map((s) => remaining.remove(s.id))
-          .whereType<Person>();
-      final cluster = [p, ...spouses]
-        ..sort((a, b) => _genderRank(a.gender).compareTo(_genderRank(b.gender)));
+      final spouseIdsByMarriageOrder = FamilyRelationshipService.marriagesOf(p.id, relationships)
+          .map((r) => r.personAId == p.id ? r.personBId : r.personAId);
+      final spouses = spouseIdsByMarriageOrder.map((id) => remaining.remove(id)).whereType<Person>();
+      final cluster = p.gender == Gender.male ? [p, ...spouses] : [...spouses, p];
       ordered.addAll(cluster);
     }
     return ordered;
   }
-
-  static int _genderRank(Gender gender) => gender == Gender.male ? 0 : 1;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

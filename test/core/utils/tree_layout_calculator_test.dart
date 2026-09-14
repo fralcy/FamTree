@@ -36,6 +36,39 @@ void main() {
     expect((positions['A']!.dx - positions['B']!.dx).abs(), TreeLayoutCalculator.nodeSpacingX);
   });
 
+  test('đa thê: nhiều vợ xếp theo đúng thứ tự ngày cưới, chồng luôn bên trái', () {
+    // Cố tình tạo quan hệ hôn nhân KHÔNG theo thứ tự ngày cưới (W2 trước
+    // W1 trong danh sách relationships) để chắc chắn code dùng startDate
+    // chứ không phải thứ tự khai báo.
+    final h = _person('H');
+    final w1 = _person('W1', gender: Gender.female);
+    final w2 = _person('W2', gender: Gender.female);
+    final persons = [h, w1, w2];
+    final relationships = [
+      Relationship.createMarriage(
+        familyTreeId: _treeId,
+        personAId: 'H',
+        personBId: 'W2',
+        startDate: const LunarDate(day: 1, month: 1, year: 2000),
+      ),
+      Relationship.createMarriage(
+        familyTreeId: _treeId,
+        personAId: 'H',
+        personBId: 'W1',
+        startDate: const LunarDate(day: 1, month: 1, year: 1990),
+      ),
+    ];
+    final generationMap =
+        GenerationService.computeGenerations(persons, relationships).generationOf;
+
+    final positions =
+        TreeLayoutCalculator.computeNodePositions(persons, relationships, generationMap);
+
+    // H cưới W1 (1990) trước W2 (2000) → thứ tự trái sang phải: H, W1, W2.
+    expect(positions['H']!.dx, lessThan(positions['W1']!.dx));
+    expect(positions['W1']!.dx, lessThan(positions['W2']!.dx));
+  });
+
   test('cha/mẹ căn giữa theo trung bình vị trí các con (bottom-up)', () {
     // 2 con → cha/mẹ phải nằm đúng ở trung bình X của 2 con, phản ánh toàn
     // bộ nhánh con cháu thay vì chỉ suy từ trên xuống.

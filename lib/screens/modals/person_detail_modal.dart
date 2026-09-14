@@ -27,7 +27,10 @@ Future<void> showPersonDetailModal(
   );
 
   if (isDesktop) {
-    return showDialog<void>(context: context, builder: (context) => Dialog(child: content));
+    return showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(child: content),
+    );
   }
   return showModalBottomSheet<void>(
     context: context,
@@ -37,7 +40,10 @@ Future<void> showPersonDetailModal(
 }
 
 class _PersonDetailContent extends StatefulWidget {
-  const _PersonDetailContent({required this.familyTreeId, required this.personId});
+  const _PersonDetailContent({
+    required this.familyTreeId,
+    required this.personId,
+  });
 
   final String familyTreeId;
   final String personId;
@@ -47,10 +53,6 @@ class _PersonDetailContent extends StatefulWidget {
 }
 
 class _PersonDetailContentState extends State<_PersonDetailContent> {
-  /// Bật = ẩn mọi nút sửa/xóa/thêm quan hệ, chỉ còn xem thông tin — tránh
-  /// bấm nhầm khi chỉ đang muốn xem qua thông tin 1 người.
-  bool _readOnly = false;
-
   String _genderLabel(AppLocalizations l10n, Gender gender) {
     switch (gender) {
       case Gender.male:
@@ -139,28 +141,32 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(_readOnly ? Icons.visibility : Icons.visibility_outlined),
+                  icon: const Icon(Icons.visibility_outlined),
                   tooltip: l10n.viewOnly,
-                  isSelected: _readOnly,
-                  onPressed: () => setState(() => _readOnly = !_readOnly),
+                  onPressed: () => showPersonFormModal(
+                    context,
+                    familyTreeId: widget.familyTreeId,
+                    existing: resolvedPerson,
+                    viewOnly: true,
+                  ),
                 ),
-                if (!_readOnly) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => showPersonFormModal(
-                      context,
-                      familyTreeId: widget.familyTreeId,
-                      existing: resolvedPerson,
-                    ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => showPersonFormModal(
+                    context,
+                    familyTreeId: widget.familyTreeId,
+                    existing: resolvedPerson,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _handleDelete(context, resolvedPerson),
-                  ),
-                ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => _handleDelete(context, resolvedPerson),
+                ),
               ],
             ),
-            Text('${l10n.gender}: ${_genderLabel(l10n, resolvedPerson.gender)}'),
+            Text(
+              '${l10n.gender}: ${_genderLabel(l10n, resolvedPerson.gender)}',
+            ),
             if (resolvedPerson.birthDate != null)
               Text(
                 '${l10n.birthDate}: '
@@ -184,13 +190,19 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
               const SizedBox(height: 8),
               Text(resolvedPerson.note!),
             ],
-            if (resolvedPerson.biography != null && resolvedPerson.biography!.trim().isNotEmpty) ...[
+            if (resolvedPerson.biography != null &&
+                resolvedPerson.biography!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   tilePadding: EdgeInsets.zero,
-                  title: Text(l10n.biography, style: Theme.of(context).textTheme.labelLarge),
+                  title: Text(
+                    l10n.biography,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
@@ -206,7 +218,6 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
               people: spouses,
               emptyLabel: l10n.noSpouses,
               addLabel: l10n.addSpouse,
-              showAdd: !_readOnly,
               onAdd: () => showRelationshipFormModal(
                 context,
                 familyTreeId: widget.familyTreeId,
@@ -221,7 +232,6 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
               people: children,
               emptyLabel: l10n.noChildren,
               addLabel: l10n.addChild,
-              showAdd: !_readOnly,
               onAdd: () => showRelationshipFormModal(
                 context,
                 familyTreeId: widget.familyTreeId,
@@ -236,7 +246,6 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
               people: parents,
               emptyLabel: l10n.noParents,
               addLabel: l10n.addParent,
-              showAdd: !_readOnly,
               onAdd: () => showRelationshipFormModal(
                 context,
                 familyTreeId: widget.familyTreeId,
@@ -268,7 +277,6 @@ class _RelationSection extends StatelessWidget {
     required this.addLabel,
     required this.onAdd,
     required this.onTapPerson,
-    this.showAdd = true,
   });
 
   final String title;
@@ -277,7 +285,6 @@ class _RelationSection extends StatelessWidget {
   final String addLabel;
   final VoidCallback onAdd;
   final void Function(String personId) onTapPerson;
-  final bool showAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -286,19 +293,23 @@ class _RelationSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(title, style: Theme.of(context).textTheme.labelLarge)),
-            if (showAdd)
-              TextButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(addLabel),
-              ),
+            Expanded(
+              child: Text(title, style: Theme.of(context).textTheme.labelLarge),
+            ),
+            TextButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(addLabel),
+            ),
           ],
         ),
         if (people.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(emptyLabel, style: Theme.of(context).textTheme.bodySmall),
+            child: Text(
+              emptyLabel,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           )
         else
           Wrap(
@@ -306,7 +317,10 @@ class _RelationSection extends StatelessWidget {
             runSpacing: 4,
             children: [
               for (final p in people)
-                ActionChip(label: Text(p.fullName), onPressed: () => onTapPerson(p.id)),
+                ActionChip(
+                  label: Text(p.fullName),
+                  onPressed: () => onTapPerson(p.id),
+                ),
             ],
           ),
       ],

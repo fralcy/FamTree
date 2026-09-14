@@ -16,6 +16,7 @@ Future<void> showPersonFormModal(
   required String familyTreeId,
   Person? existing,
   Gender? defaultGender,
+  bool viewOnly = false,
 }) {
   final isDesktop = ResponsiveScreen.isDesktopSize(MediaQuery.sizeOf(context));
   final provider = context.read<FamilyTreeProvider>();
@@ -25,11 +26,15 @@ Future<void> showPersonFormModal(
       familyTreeId: familyTreeId,
       existing: existing,
       defaultGender: defaultGender,
+      viewOnly: viewOnly,
     ),
   );
 
   if (isDesktop) {
-    return showDialog<void>(context: context, builder: (context) => Dialog(child: content));
+    return showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(child: content),
+    );
   }
   return showModalBottomSheet<void>(
     context: context,
@@ -42,7 +47,12 @@ Future<void> showPersonFormModal(
 }
 
 class _PersonFormContent extends StatefulWidget {
-  const _PersonFormContent({required this.familyTreeId, this.existing, this.defaultGender});
+  const _PersonFormContent({
+    required this.familyTreeId,
+    this.existing,
+    this.defaultGender,
+    this.viewOnly = false,
+  });
 
   final String familyTreeId;
   final Person? existing;
@@ -51,22 +61,31 @@ class _PersonFormContent extends StatefulWidget {
   /// thêm vợ/chồng từ relationship_form_modal). Bỏ qua khi [existing] != null.
   final Gender? defaultGender;
 
+  /// Mở lại đúng form Sửa nhưng khoá mọi ô nhập, không có nút Lưu — dùng cho
+  /// nút "xem" trong modal chi tiết, để bố cục xem và sửa nhất quán thay vì
+  /// 2 giao diện khác nhau.
+  final bool viewOnly;
+
   @override
   State<_PersonFormContent> createState() => _PersonFormContentState();
 }
 
 class _PersonFormContentState extends State<_PersonFormContent> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController =
-      TextEditingController(text: widget.existing?.fullName);
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.existing?.fullName,
+  );
   late final TextEditingController _placeOfBirthController =
       TextEditingController(text: widget.existing?.placeOfBirth);
-  late final TextEditingController _noteController =
-      TextEditingController(text: widget.existing?.note);
-  late final TextEditingController _biographyController =
-      TextEditingController(text: widget.existing?.biography);
+  late final TextEditingController _noteController = TextEditingController(
+    text: widget.existing?.note,
+  );
+  late final TextEditingController _biographyController = TextEditingController(
+    text: widget.existing?.biography,
+  );
 
-  late Gender _gender = widget.existing?.gender ?? widget.defaultGender ?? Gender.male;
+  late Gender _gender =
+      widget.existing?.gender ?? widget.defaultGender ?? Gender.male;
   late LunarDate? _birthDate = widget.existing?.birthDate;
   late bool _isDeceased = widget.existing?.isDeceased ?? false;
   late LunarDate? _deathDate = widget.existing?.deathDate;
@@ -77,11 +96,12 @@ class _PersonFormContentState extends State<_PersonFormContent> {
   /// ngày mất từ trước, tắt sẵn để giữ đúng dữ liệu cũ.
   late bool _memorialSameAsDeathDate =
       widget.existing == null || widget.existing!.memorialDate == null
-          ? true
-          : widget.existing!.memorialDate == widget.existing!.deathDate;
+      ? true
+      : widget.existing!.memorialDate == widget.existing!.deathDate;
 
   late bool _biographyExpanded =
-      widget.existing?.biography != null && widget.existing!.biography!.trim().isNotEmpty;
+      widget.existing?.biography != null &&
+      widget.existing!.biography!.trim().isNotEmpty;
 
   @override
   void dispose() {
@@ -99,36 +119,42 @@ class _PersonFormContentState extends State<_PersonFormContent> {
     final placeOfBirth = _placeOfBirthController.text.trim();
     final note = _noteController.text.trim();
     final biography = _biographyController.text.trim();
-    final effectiveMemorialDate = _memorialSameAsDeathDate ? _deathDate : _memorialDate;
+    final effectiveMemorialDate = _memorialSameAsDeathDate
+        ? _deathDate
+        : _memorialDate;
 
     if (widget.existing == null) {
-      await provider.addPerson(Person.create(
-        familyTreeId: widget.familyTreeId,
-        fullName: name,
-        gender: _gender,
-        birthDate: _birthDate,
-        isDeceased: _isDeceased,
-        deathDate: _isDeceased ? _deathDate : null,
-        memorialDate: _isDeceased ? effectiveMemorialDate : null,
-        placeOfBirth: placeOfBirth.isEmpty ? null : placeOfBirth,
-        note: note.isEmpty ? null : note,
-        biography: biography.isEmpty ? null : biography,
-      ));
+      await provider.addPerson(
+        Person.create(
+          familyTreeId: widget.familyTreeId,
+          fullName: name,
+          gender: _gender,
+          birthDate: _birthDate,
+          isDeceased: _isDeceased,
+          deathDate: _isDeceased ? _deathDate : null,
+          memorialDate: _isDeceased ? effectiveMemorialDate : null,
+          placeOfBirth: placeOfBirth.isEmpty ? null : placeOfBirth,
+          note: note.isEmpty ? null : note,
+          biography: biography.isEmpty ? null : biography,
+        ),
+      );
     } else {
-      await provider.updatePerson(widget.existing!.copyWith(
-        fullName: name,
-        gender: _gender,
-        birthDate: _birthDate,
-        clearBirthDate: _birthDate == null,
-        isDeceased: _isDeceased,
-        deathDate: _isDeceased ? _deathDate : null,
-        clearDeathDate: !_isDeceased || _deathDate == null,
-        memorialDate: _isDeceased ? effectiveMemorialDate : null,
-        clearMemorialDate: !_isDeceased || effectiveMemorialDate == null,
-        placeOfBirth: placeOfBirth.isEmpty ? null : placeOfBirth,
-        note: note.isEmpty ? null : note,
-        biography: biography.isEmpty ? null : biography,
-      ));
+      await provider.updatePerson(
+        widget.existing!.copyWith(
+          fullName: name,
+          gender: _gender,
+          birthDate: _birthDate,
+          clearBirthDate: _birthDate == null,
+          isDeceased: _isDeceased,
+          deathDate: _isDeceased ? _deathDate : null,
+          clearDeathDate: !_isDeceased || _deathDate == null,
+          memorialDate: _isDeceased ? effectiveMemorialDate : null,
+          clearMemorialDate: !_isDeceased || effectiveMemorialDate == null,
+          placeOfBirth: placeOfBirth.isEmpty ? null : placeOfBirth,
+          note: note.isEmpty ? null : note,
+          biography: biography.isEmpty ? null : biography,
+        ),
+      );
     }
     if (mounted) Navigator.of(context).pop();
   }
@@ -140,95 +166,128 @@ class _PersonFormContentState extends State<_PersonFormContent> {
     return Form(
       key: _formKey,
       child: ModalShell(
-        title: widget.existing == null ? l10n.addPerson : l10n.editPerson,
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
-          FilledButton(onPressed: _submit, child: Text(l10n.save)),
-        ],
-        children: [
-          ResponsiveFieldRow(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: l10n.fullName, isDense: true),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? l10n.fieldRequired : null,
-                autofocus: true,
-              ),
-              GenderDropdown(
-                value: _gender,
-                onChanged: (value) => setState(() => _gender = value ?? _gender),
-              ),
-            ],
-          ),
-          LunarDateField(
-            label: l10n.birthDate,
-            value: _birthDate,
-            onChanged: (v) => setState(() => _birthDate = v),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _placeOfBirthController,
-            decoration: InputDecoration(labelText: l10n.placeOfBirth, isDense: true),
-          ),
-          const SizedBox(height: 12),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.isDeceased),
-            value: _isDeceased,
-            onChanged: (value) => setState(() => _isDeceased = value),
-          ),
-          if (_isDeceased) ...[
-            const SizedBox(height: 8),
-            LunarDateField(
-              label: l10n.deathDate,
-              value: _deathDate,
-              onChanged: (v) => setState(() => _deathDate = v),
-            ),
-            const SizedBox(height: 4),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(l10n.sameAsDeathDate),
-              value: _memorialSameAsDeathDate,
-              onChanged: (value) => setState(() => _memorialSameAsDeathDate = value),
-            ),
-            if (!_memorialSameAsDeathDate) ...[
-              const SizedBox(height: 8),
-              LunarDateField(
-                label: l10n.memorialDate,
-                value: _memorialDate,
-                onChanged: (v) => setState(() => _memorialDate = v),
-              ),
-            ],
-          ],
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _noteController,
-            decoration: InputDecoration(labelText: l10n.note, isDense: true),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 4),
-          Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              initiallyExpanded: _biographyExpanded,
-              tilePadding: EdgeInsets.zero,
-              title: Text(l10n.biography),
-              subtitle: _biographyExpanded ? null : Text(l10n.biographyHint),
-              onExpansionChanged: (expanded) => setState(() => _biographyExpanded = expanded),
-              children: [
-                TextFormField(
-                  controller: _biographyController,
-                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
-                  maxLines: 8,
-                  minLines: 4,
+        title: widget.viewOnly
+            ? l10n.viewOnly
+            : (widget.existing == null ? l10n.addPerson : l10n.editPerson),
+        actions: widget.viewOnly
+            ? [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.close),
                 ),
+              ]
+            : [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.cancel),
+                ),
+                FilledButton(onPressed: _submit, child: Text(l10n.save)),
               ],
-            ),
-          ),
+        children: [
+          AbsorbPointer(absorbing: widget.viewOnly, child: _buildFields(l10n)),
         ],
       ),
+    );
+  }
+
+  Widget _buildFields(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ResponsiveFieldRow(
+          children: [
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: l10n.fullName,
+                isDense: true,
+              ),
+              validator: (value) => (value == null || value.trim().isEmpty)
+                  ? l10n.fieldRequired
+                  : null,
+              autofocus: true,
+            ),
+            GenderDropdown(
+              value: _gender,
+              onChanged: (value) => setState(() => _gender = value ?? _gender),
+            ),
+          ],
+        ),
+        LunarDateField(
+          label: l10n.birthDate,
+          value: _birthDate,
+          onChanged: (v) => setState(() => _birthDate = v),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _placeOfBirthController,
+          decoration: InputDecoration(
+            labelText: l10n.placeOfBirth,
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.isDeceased),
+          value: _isDeceased,
+          onChanged: (value) => setState(() => _isDeceased = value),
+        ),
+        if (_isDeceased) ...[
+          const SizedBox(height: 8),
+          LunarDateField(
+            label: l10n.deathDate,
+            value: _deathDate,
+            onChanged: (v) => setState(() => _deathDate = v),
+          ),
+          const SizedBox(height: 4),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: Text(l10n.sameAsDeathDate),
+            value: _memorialSameAsDeathDate,
+            onChanged: (value) =>
+                setState(() => _memorialSameAsDeathDate = value),
+          ),
+          if (!_memorialSameAsDeathDate) ...[
+            const SizedBox(height: 8),
+            LunarDateField(
+              label: l10n.memorialDate,
+              value: _memorialDate,
+              onChanged: (v) => setState(() => _memorialDate = v),
+            ),
+          ],
+        ],
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _noteController,
+          decoration: InputDecoration(labelText: l10n.note, isDense: true),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 4),
+        Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: _biographyExpanded,
+            tilePadding: EdgeInsets.zero,
+            title: Text(l10n.biography),
+            subtitle: _biographyExpanded ? null : Text(l10n.biographyHint),
+            onExpansionChanged: (expanded) =>
+                setState(() => _biographyExpanded = expanded),
+            children: [
+              TextFormField(
+                controller: _biographyController,
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 8,
+                minLines: 4,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

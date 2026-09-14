@@ -39,6 +39,12 @@ class FamilyTreeProvider extends ChangeNotifier {
   List<Relationship> marriagesOf(String personId) =>
       FamilyRelationshipService.marriagesOf(personId, _relationships);
 
+  List<Person> biologicalParentsOf(String personId) =>
+      FamilyRelationshipService.biologicalParentsOf(personId, _persons, _relationships);
+
+  Relationship? marriageBetween(String personAId, String personBId) =>
+      FamilyRelationshipService.marriageBetween(personAId, personBId, _relationships);
+
   Future<void> addPerson(Person person) async {
     await DataManager().savePerson(person);
     refresh();

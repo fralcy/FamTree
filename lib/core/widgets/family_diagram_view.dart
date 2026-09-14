@@ -129,12 +129,29 @@ class _PersonNode extends StatelessWidget {
   final Person person;
   final VoidCallback onTap;
 
+  /// Cố định xanh dương/hồng theo giới tính (cliché nhưng dễ nhận ra ngay
+  /// khi lướt mắt qua cây to) — KHÔNG lấy theo seed color của theme đang
+  /// chọn, chỉ đổi sắc độ theo light/dark để chữ/viền luôn đọc rõ.
+  Color _baseColor(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    if (person.gender == Gender.male) {
+      return isDark ? Colors.blue.shade700 : Colors.blue.shade200;
+    }
+    return isDark ? Colors.pink.shade700 : Colors.pink.shade200;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDeceased = person.isDeceased;
+    final baseColor = _baseColor(Theme.of(context).brightness);
+    // Người mất: cùng tông nhưng nhạt hẳn đi (pha xám) thay vì đổi hẳn màu
+    // khác — vẫn phân biệt được giới tính, chỉ "nhạt" đi để báo đã mất.
+    final fillColor = person.isDeceased ? Color.lerp(baseColor, Colors.grey, 0.5)! : baseColor;
+    final textColor = ThemeData.estimateBrightnessForColor(fillColor) == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
     return Material(
-      color: isDeceased ? colorScheme.surfaceContainerHighest : colorScheme.primaryContainer,
+      color: fillColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: colorScheme.outline),
@@ -150,7 +167,7 @@ class _PersonNode extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(color: colorScheme.onPrimaryContainer),
+              style: TextStyle(color: textColor),
             ),
           ),
         ),

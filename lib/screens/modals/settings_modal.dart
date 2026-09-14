@@ -98,8 +98,8 @@ class _SettingsContent extends StatelessWidget {
             ),
           ],
         ),
-        if (tree != null) ...[
-          const SizedBox(height: 20),
+        const SizedBox(height: 20),
+        if (tree != null)
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.import_export),
@@ -108,8 +108,17 @@ class _SettingsContent extends StatelessWidget {
               Navigator.of(context).pop();
               showBackupRestoreModal(context, tree: tree!);
             },
+          )
+        else
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.download),
+            title: Text(l10n.importNewTree),
+            onTap: () {
+              Navigator.of(context).pop();
+              showImportNewTreeModal(context);
+            },
           ),
-        ],
       ],
     );
   }

@@ -82,6 +82,10 @@
   "backupExportSuccess": "File exported successfully.",
   "backupImportSuccess": "Data imported into the family tree successfully.",
   "backupImportError": "Could not read file: {error}",
+  "importNewTree": "Import family tree (create new)",
+  "importNewTreeTitle": "Import new family tree",
+  "importNewTreeHint": "Creates a brand new family tree from a previously exported file, existing family trees are not affected.",
+  "importNewTreeButton": "Choose family tree file",
 
   "save": "Save",
   "cancel": "Cancel",

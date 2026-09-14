@@ -111,6 +111,10 @@
   "@backupImportError": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "importNewTree": "Nhập gia phả (tạo mới)",
+  "importNewTreeTitle": "Nhập gia phả mới",
+  "importNewTreeHint": "Tạo 1 gia phả mới hoàn toàn từ file đã xuất trước đó, không ảnh hưởng các gia phả có sẵn.",
+  "importNewTreeButton": "Chọn file gia phả",
 
   "save": "Lưu",
   "cancel": "Huỷ",

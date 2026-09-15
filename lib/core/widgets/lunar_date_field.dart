@@ -190,6 +190,17 @@ class _LunarDateFieldState extends State<LunarDateField> {
       displayString: (d) => '$d',
       initialValue: _day,
       onSelected: (d) => _update(day: d),
+      // Gõ số rồi bấm thẳng nút Lưu (không bấm Enter/rời ô, không bấm chọn
+      // gợi ý) trước đây không đăng ký giá trị gì cả — field hiện đúng số
+      // vừa gõ nhưng _day vẫn null nên không bao giờ đủ 3 phần để lưu được
+      // ngày sinh. Chốt luôn theo TỪNG PHÍM GÕ (không đợi Enter/rời ô) nên
+      // luôn có giá trị mới nhất bất kể người dùng thao tác tiếp thế nào.
+      onChangedFreeText: (text) {
+        final typedDay = int.tryParse(text.trim());
+        if (typedDay != null && typedDay >= 1 && typedDay <= 30) {
+          _update(day: typedDay);
+        }
+      },
     );
   }
 
@@ -201,6 +212,12 @@ class _LunarDateFieldState extends State<LunarDateField> {
       displayString: (m) => _isLeapMonth ? '$m (${l10n.leapMonth})' : '$m',
       initialValue: _month,
       onSelected: (m) => _update(month: m),
+      onChangedFreeText: (text) {
+        final typedMonth = int.tryParse(text.trim());
+        if (typedMonth != null && typedMonth >= 1 && typedMonth <= 12) {
+          _update(month: typedMonth);
+        }
+      },
       suffixIcon: _month != null
           ? IconButton(
               icon: Icon(
@@ -226,12 +243,15 @@ class _LunarDateFieldState extends State<LunarDateField> {
       displayString: (y) => CanChiService.yearLabel(y, languageCode: languageCode),
       initialValue: _year,
       onSelected: (y) => _update(year: y),
-      onSubmittedFreeText: (text) {
-        final typedYear = int.tryParse(text.trim());
-        if (typedYear != null && typedYear >= 1000 && typedYear <= 2200) {
-          _update(year: typedYear);
-        }
-      },
+      onSubmittedFreeText: _commitTypedYear,
+      onChangedFreeText: _commitTypedYear,
     );
+  }
+
+  void _commitTypedYear(String text) {
+    final typedYear = int.tryParse(text.trim());
+    if (typedYear != null && typedYear >= 1000 && typedYear <= 2200) {
+      _update(year: typedYear);
+    }
   }
 }

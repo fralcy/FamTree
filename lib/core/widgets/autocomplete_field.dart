@@ -14,6 +14,7 @@ class AutocompleteField<T extends Object> extends StatelessWidget {
     this.validator,
     this.suffixIcon,
     this.onSubmittedFreeText,
+    this.onChangedFreeText,
   });
 
   final String label;
@@ -28,6 +29,13 @@ class AutocompleteField<T extends Object> extends StatelessWidget {
   /// cho trường hợp cần chấp nhận giá trị ngoài [options] (vd năm xa hơn
   /// danh sách hiển thị mặc định). Bỏ qua nếu không cần khả năng này.
   final void Function(String text)? onSubmittedFreeText;
+
+  /// Gọi mỗi khi text thay đổi (từng phím gõ) — dùng để "chốt" giá trị
+  /// ngay khi gõ đủ, KHÔNG phụ thuộc vào việc người dùng có bấm Enter hay
+  /// rời khỏi ô hay không (bấm thẳng nút Lưu ngay sau khi gõ mà chưa rời ô
+  /// trước đó không tự kích hoạt [onSubmittedFreeText]/[onSelected], dẫn
+  /// tới giá trị vừa gõ bị mất — xem lunar_date_field.dart).
+  final void Function(String text)? onChangedFreeText;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +56,7 @@ class AutocompleteField<T extends Object> extends StatelessWidget {
           focusNode: focusNode,
           decoration: InputDecoration(labelText: label, isDense: true, suffixIcon: suffixIcon),
           validator: validator,
+          onChanged: onChangedFreeText,
           onFieldSubmitted: onSubmittedFreeText == null
               ? null
               : (text) {

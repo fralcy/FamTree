@@ -209,53 +209,30 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
                 ),
               ],
             ),
-            Text(
-              '${l10n.gender}: ${_genderLabel(l10n, resolvedPerson.gender)}',
-            ),
-            if (resolvedPerson.birthDate != null)
-              Text(
-                '${l10n.birthDate}: '
-                '${LunarDateFormatter.format(l10n, resolvedPerson.birthDate!, languageCode: languageCode)}',
-              ),
-            if (resolvedPerson.placeOfBirth != null)
-              Text('${l10n.placeOfBirth}: ${resolvedPerson.placeOfBirth}'),
-            if (resolvedPerson.isDeceased) ...[
-              if (resolvedPerson.deathDate != null)
-                Text(
-                  '${l10n.deathDate}: '
-                  '${LunarDateFormatter.format(l10n, resolvedPerson.deathDate!, languageCode: languageCode)}',
-                ),
-              if (resolvedPerson.memorialDate != null)
-                Text(
-                  '${l10n.memorialDate}: '
-                  '${LunarDateFormatter.format(l10n, resolvedPerson.memorialDate!, languageCode: languageCode)}',
-                ),
-            ],
-            if (resolvedPerson.note != null) ...[
-              const SizedBox(height: 8),
-              Text(resolvedPerson.note!),
-            ],
-            if (resolvedPerson.biography != null &&
-                resolvedPerson.biography!.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Theme(
-                data: Theme.of(
-                  context,
-                ).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(
-                    l10n.biography,
-                    style: Theme.of(context).textTheme.labelLarge,
+            // Chỉ hiện tóm tắt gọn (giới tính/ngày sinh/nơi sinh) — thông
+            // tin đầy đủ (ngày mất, ngày giỗ, ghi chú, tiểu sử) xem qua
+            // icon "mắt" (mở form Sửa ở chế độ khoá) thay vì nhồi hết vào
+            // modal này.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${l10n.gender}: ${_genderLabel(l10n, resolvedPerson.gender)}',
                   ),
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(resolvedPerson.biography!),
-                    ),
-                  ],
                 ),
-              ),
+                if (resolvedPerson.birthDate != null)
+                  Expanded(
+                    child: Text(
+                      '${l10n.birthDate}: '
+                      '${LunarDateFormatter.format(l10n, resolvedPerson.birthDate!, languageCode: languageCode)}',
+                    ),
+                  ),
+              ],
+            ),
+            if (resolvedPerson.placeOfBirth != null) ...[
+              const SizedBox(height: 4),
+              Text('${l10n.placeOfBirth}: ${resolvedPerson.placeOfBirth}'),
             ],
             const Divider(height: 32),
             _RelationSection(

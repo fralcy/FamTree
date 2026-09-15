@@ -169,6 +169,7 @@ class _PersonFormContentState extends State<_PersonFormContent> {
         title: widget.viewOnly
             ? l10n.viewOnly
             : (widget.existing == null ? l10n.addPerson : l10n.editPerson),
+        onSubmit: widget.viewOnly ? null : _submit,
         actions: widget.viewOnly
             ? [
                 TextButton(

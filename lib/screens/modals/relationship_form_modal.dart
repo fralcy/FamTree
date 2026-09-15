@@ -230,6 +230,7 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
       key: _formKey,
       child: ModalShell(
         title: _titleFor(l10n),
+        onSubmit: () => _submit(provider, l10n),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
           FilledButton(onPressed: () => _submit(provider, l10n), child: Text(l10n.save)),

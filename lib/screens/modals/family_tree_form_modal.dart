@@ -76,6 +76,7 @@ class _FamilyTreeFormContentState extends State<_FamilyTreeFormContent> {
       child: ModalShell(
         title: widget.existing == null ? l10n.createTree : l10n.editTree,
         maxWidth: 440,
+        onSubmit: _submit,
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
           FilledButton(onPressed: _submit, child: Text(l10n.save)),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Khung modal dùng chung cho mọi showXModal — giới hạn chiều rộng tối đa
 /// (tránh dialog bị kéo dài/quá khổ trên desktop) và cung cấp cấu trúc
@@ -13,6 +14,7 @@ class ModalShell extends StatelessWidget {
     required this.children,
     this.actions,
     this.maxWidth = 520,
+    this.onSubmit,
   });
 
   final String title;
@@ -20,9 +22,14 @@ class ModalShell extends StatelessWidget {
   final List<Widget>? actions;
   final double maxWidth;
 
+  /// Phím tắt Ctrl+Enter (Cmd+Enter trên macOS) — gọi đúng hành động Lưu mà
+  /// không cần với chuột, tiện khi vừa gõ xong 1 field cuối. Bỏ qua nếu
+  /// modal không có khái niệm "lưu" (vd Cài đặt, Sao lưu/Khôi phục).
+  final VoidCallback? onSubmit;
+
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
+    final content = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -48,6 +55,17 @@ class ModalShell extends StatelessWidget {
           ],
         ),
       ),
+    );
+
+    if (onSubmit == null) return content;
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.enter, control: true): onSubmit!,
+        const SingleActivator(LogicalKeyboardKey.numpadEnter, control: true): onSubmit!,
+        const SingleActivator(LogicalKeyboardKey.enter, meta: true): onSubmit!,
+        const SingleActivator(LogicalKeyboardKey.numpadEnter, meta: true): onSubmit!,
+      },
+      child: content,
     );
   }
 }

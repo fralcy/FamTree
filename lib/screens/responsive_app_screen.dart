@@ -4,9 +4,8 @@ import 'package:provider/provider.dart';
 import '../core/providers/family_tree_list_provider.dart';
 import '../core/providers/family_tree_provider.dart';
 import '../models/index.dart';
-import 'desktop_landscape_family_tree_screen.dart';
 import 'desktop_landscape_tree_list_screen.dart';
-import 'mobile_portrait_family_tree_screen.dart';
+import 'family_tree_screen.dart';
 import 'mobile_portrait_tree_list_screen.dart';
 import 'responsive_screen.dart';
 
@@ -54,12 +53,7 @@ class _ResponsiveAppScreenState extends State<ResponsiveAppScreen> {
     return ChangeNotifierProvider<FamilyTreeProvider>(
       key: ValueKey(selectedTreeId),
       create: (_) => FamilyTreeProvider(familyTreeId: selectedTreeId),
-      child: ResponsiveScreen(
-        mobileBuilder: (context) =>
-            MobilePortraitFamilyTreeScreen(tree: tree!, onBack: _closeTree),
-        desktopBuilder: (context) =>
-            DesktopLandscapeFamilyTreeScreen(tree: tree!, onBack: _closeTree),
-      ),
+      child: FamilyTreeScreen(tree: tree, onBack: _closeTree),
     );
   }
 }

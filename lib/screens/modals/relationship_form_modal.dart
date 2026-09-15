@@ -72,6 +72,11 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
   LunarDate? _marriageEnd;
   String? _constraintError;
 
+  /// Chỉ dùng khi kind=child: vợ/chồng của anchor cũng được chọn làm
+  /// cha/mẹ của con — tạo cả 2 liên kết cha/mẹ-con trong 1 lần lưu, thay
+  /// vì phải mở form này riêng lần thứ 2 từ modal của người kia.
+  final Set<String> _coParentIds = {};
+
   @override
   void dispose() {
     _newNameController.dispose();
@@ -99,6 +104,24 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     }).toList();
   }
 
+  /// Mô phỏng THÊM TUẦN TỰ từng cha/mẹ mới vào [existingBioParents] —
+  /// dùng chung cho cả thêm 1 cha/mẹ (kind=parent) lẫn thêm nhiều cha/mẹ
+  /// cùng lúc (kind=child + chọn thêm vợ/chồng làm cha/mẹ chung), trả về
+  /// thông báo lỗi đầu tiên gặp phải (null nếu hợp lệ).
+  String? _simulateAddBiologicalParents(
+    List<Person> existingBioParents,
+    List<Gender> newParentGenders,
+    AppLocalizations l10n,
+  ) {
+    final genders = existingBioParents.map((p) => p.gender).toList();
+    for (final g in newParentGenders) {
+      if (genders.length >= 2) return l10n.maxBiologicalParentsReached;
+      if (genders.contains(g)) return l10n.biologicalParentsMustDifferGender;
+      genders.add(g);
+    }
+    return null;
+  }
+
   /// Ràng buộc tối đa 2 cha/mẹ RUỘT khác giới tính cho 1 người. Chỉ áp
   /// dụng khi type=parentChild và childType=biological — con nuôi/con
   /// riêng không giới hạn số lượng.
@@ -106,32 +129,23 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     if (widget.kind == RelationshipModalKind.spouse) return null;
     if (_childType != ChildType.biological) return null;
 
-    final String? childId;
-    final Gender newParentGender;
     if (widget.kind == RelationshipModalKind.parent) {
-      childId = widget.anchor.id;
-      newParentGender = _useExisting
+      final newParentGender = _useExisting
           ? provider.persons.firstWhere((p) => p.id == _selectedPersonId).gender
           : _newGender;
-    } else {
-      // kind == child: anchor trở thành cha/mẹ của otherPerson.
-      if (_useExisting) {
-        childId = _selectedPersonId;
-      } else {
-        childId = null; // người con mới tạo, chắc chắn chưa có cha/mẹ nào.
-      }
-      newParentGender = widget.anchor.gender;
+      final existingBioParents = provider.biologicalParentsOf(widget.anchor.id);
+      return _simulateAddBiologicalParents(existingBioParents, [newParentGender], l10n);
     }
-    if (childId == null) return null;
 
-    final existingBioParents = provider.biologicalParentsOf(childId);
-    if (existingBioParents.length >= 2) {
-      return l10n.maxBiologicalParentsReached;
-    }
-    if (existingBioParents.any((p) => p.gender == newParentGender)) {
-      return l10n.biologicalParentsMustDifferGender;
-    }
-    return null;
+    // kind == child: anchor + (các) vợ/chồng được chọn cùng trở thành
+    // cha/mẹ của otherPerson trong 1 lần lưu.
+    final childId = _useExisting ? _selectedPersonId : null;
+    final existingBioParents = childId == null ? const <Person>[] : provider.biologicalParentsOf(childId);
+    final newParentGenders = [
+      widget.anchor.gender,
+      for (final id in _coParentIds) provider.persons.firstWhere((p) => p.id == id).gender,
+    ];
+    return _simulateAddBiologicalParents(existingBioParents, newParentGenders, l10n);
   }
 
   Future<void> _submit(FamilyTreeProvider provider, AppLocalizations l10n) async {
@@ -173,6 +187,14 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
           childId: otherPersonId,
           childType: _childType,
         ));
+        for (final coParentId in _coParentIds) {
+          await provider.addRelationship(Relationship.createParentChild(
+            familyTreeId: widget.familyTreeId,
+            parentId: coParentId,
+            childId: otherPersonId,
+            childType: _childType,
+          ));
+        }
       case RelationshipModalKind.parent:
         await provider.addRelationship(Relationship.createParentChild(
           familyTreeId: widget.familyTreeId,
@@ -201,6 +223,8 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
     final l10n = AppLocalizations.of(context)!;
     final provider = context.watch<FamilyTreeProvider>();
     final selectable = _selectablePersons(provider);
+    final spousesOfAnchor =
+        widget.kind == RelationshipModalKind.child ? provider.spousesOf(widget.anchor.id) : const <Person>[];
 
     return Form(
       key: _formKey,
@@ -264,6 +288,26 @@ class _RelationshipFormContentState extends State<_RelationshipFormContent> {
                 _constraintError = null;
               }),
             ),
+          ],
+          if (widget.kind == RelationshipModalKind.child && spousesOfAnchor.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(l10n.alsoChildOf, style: Theme.of(context).textTheme.labelLarge),
+            for (final spouse in spousesOfAnchor)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(spouse.fullName),
+                value: _coParentIds.contains(spouse.id),
+                onChanged: (checked) => setState(() {
+                  if (checked ?? false) {
+                    _coParentIds.add(spouse.id);
+                  } else {
+                    _coParentIds.remove(spouse.id);
+                  }
+                  _constraintError = null;
+                }),
+              ),
           ],
           if (widget.kind == RelationshipModalKind.spouse) ...[
             const SizedBox(height: 12),

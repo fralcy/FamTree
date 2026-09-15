@@ -55,6 +55,7 @@
   "noParents": "Parents unknown",
   "addSpouse": "Add spouse",
   "addChild": "Add child",
+  "alsoChildOf": "Also a child of:",
   "addParent": "Add parent",
 
   "relationshipTypeMarriage": "Marriage",

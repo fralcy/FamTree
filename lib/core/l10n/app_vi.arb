@@ -81,6 +81,7 @@
   "noParents": "Chưa rõ cha/mẹ",
   "addSpouse": "Thêm vợ/chồng",
   "addChild": "Thêm con",
+  "alsoChildOf": "Cũng là con của:",
   "addParent": "Thêm cha/mẹ",
 
   "relationshipTypeMarriage": "Hôn nhân",

@@ -42,6 +42,7 @@
   "lunarYear": "Year",
   "leapMonth": "Leap",
   "clearDate": "Clear date",
+  "loadMore": "Load more",
   "solarDateAnnotation": "Solar date: {day}/{month}/{year}",
   "invalidLunarDate": "Invalid lunar date (this month only has 29 days, or this year has no such leap month)",
 

@@ -245,6 +245,10 @@ class _LunarDateFieldState extends State<LunarDateField> {
       onSelected: (y) => _update(year: y),
       onSubmittedFreeText: _commitTypedYear,
       onChangedFreeText: _commitTypedYear,
+      // Ô trống mặc định chỉ hiện 3 năm gần nhất (đầu danh sách, đã sắp
+      // giảm dần) + nút "Tải thêm" thay vì đổ hết ~125 năm 1 lần.
+      initialVisibleCount: 3,
+      loadMoreStep: 3,
     );
   }
 

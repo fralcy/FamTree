@@ -61,6 +61,7 @@
   "lunarYear": "Năm",
   "leapMonth": "Nhuận",
   "clearDate": "Xoá ngày",
+  "loadMore": "Tải thêm",
   "solarDateAnnotation": "Dương lịch: {day}/{month}/{year}",
   "@solarDateAnnotation": {
     "placeholders": {

@@ -38,6 +38,11 @@
   "@deletePersonOrphanWarning": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "removeRelationship": "Xoá quan hệ",
+  "removeRelationshipConfirm": "Xoá quan hệ với \"{name}\"? Chỉ xoá liên kết, không xoá người này.",
+  "@removeRelationshipConfirm": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "fullName": "Họ và tên",
   "gender": "Giới tính",
   "genderMale": "Nam",

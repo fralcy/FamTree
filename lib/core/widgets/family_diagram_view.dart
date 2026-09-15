@@ -70,6 +70,10 @@ class _FamilyDiagramViewState extends State<FamilyDiagramView> {
       return const SizedBox.shrink();
     }
 
+    // Đường cha/mẹ-con lấy màu primary của theme đang chọn (xanh lá/xanh
+    // dương/nâu trầm/tối) thay vì màu cố định — luôn "khớp" theme hiện tại.
+    final parentChildColor = Theme.of(context).colorScheme.primary;
+
     final positions = TreeLayoutCalculator.computeNodePositions(
       widget.persons,
       widget.relationships,
@@ -104,6 +108,7 @@ class _FamilyDiagramViewState extends State<FamilyDiagramView> {
                     padding: FamilyDiagramView.padding,
                     nodeWidth: FamilyDiagramView.nodeWidth,
                     nodeHeight: FamilyDiagramView.nodeHeight,
+                    parentChildColor: parentChildColor,
                   ),
                 ),
                 for (final person in widget.persons)
@@ -184,6 +189,7 @@ class _DiagramEdgesPainter extends CustomPainter {
     required this.padding,
     required this.nodeWidth,
     required this.nodeHeight,
+    required this.parentChildColor,
   });
 
   final List<Person> persons;
@@ -192,6 +198,7 @@ class _DiagramEdgesPainter extends CustomPainter {
   final double padding;
   final double nodeWidth;
   final double nodeHeight;
+  final Color parentChildColor;
 
   Offset _center(String personId) {
     final pos = positions[personId] ?? Offset.zero;
@@ -265,7 +272,7 @@ class _DiagramEdgesPainter extends CustomPainter {
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     final parentChildPaint = Paint()
-      ..color = Colors.blueGrey
+      ..color = parentChildColor
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
@@ -345,6 +352,7 @@ class _DiagramEdgesPainter extends CustomPainter {
   bool shouldRepaint(covariant _DiagramEdgesPainter oldDelegate) {
     return oldDelegate.persons != persons ||
         oldDelegate.relationships != relationships ||
-        oldDelegate.positions != positions;
+        oldDelegate.positions != positions ||
+        oldDelegate.parentChildColor != parentChildColor;
   }
 }

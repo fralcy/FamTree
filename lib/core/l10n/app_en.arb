@@ -22,6 +22,8 @@
   "deletePerson": "Delete this person",
   "deletePersonConfirm": "Remove \"{name}\" from the family tree? Related relationships will also be deleted.",
   "deletePersonOrphanWarning": "{name} will lose their parent link because this is their only recorded parent.",
+  "removeRelationship": "Remove relationship",
+  "removeRelationshipConfirm": "Remove the relationship with \"{name}\"? Only the link is removed, not the person.",
   "fullName": "Full name",
   "gender": "Gender",
   "genderMale": "Male",

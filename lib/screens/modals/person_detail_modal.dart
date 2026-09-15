@@ -84,6 +84,51 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
     });
   }
 
+  /// Xoá ĐÚNG 1 quan hệ cụ thể (không đụng tới người) — dùng khi lỡ chọn
+  /// nhầm người/loại quan hệ lúc thêm, tránh phải xoá cả người rồi tạo lại.
+  Future<void> _handleRemoveRelationship(
+    BuildContext context, {
+    required Person otherPerson,
+    required RelationshipModalKind kind,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final provider = context.read<FamilyTreeProvider>();
+
+    Relationship? match;
+    for (final r in provider.relationships) {
+      switch (kind) {
+        case RelationshipModalKind.spouse:
+          if (r.type == RelationshipType.marriage &&
+              ((r.personAId == widget.personId && r.personBId == otherPerson.id) ||
+                  (r.personBId == widget.personId && r.personAId == otherPerson.id))) {
+            match = r;
+          }
+        case RelationshipModalKind.child:
+          if (r.type == RelationshipType.parentChild &&
+              r.personAId == widget.personId &&
+              r.personBId == otherPerson.id) {
+            match = r;
+          }
+        case RelationshipModalKind.parent:
+          if (r.type == RelationshipType.parentChild &&
+              r.personAId == otherPerson.id &&
+              r.personBId == widget.personId) {
+            match = r;
+          }
+      }
+      if (match != null) break;
+    }
+    if (match == null) return;
+
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.removeRelationship,
+      message: l10n.removeRelationshipConfirm(otherPerson.fullName),
+    );
+    if (!confirmed) return;
+    await provider.deleteRelationship(match.id);
+  }
+
   Future<void> _handleDelete(BuildContext context, Person person) async {
     final l10n = AppLocalizations.of(context)!;
     final provider = context.read<FamilyTreeProvider>();
@@ -225,6 +270,11 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
                 kind: RelationshipModalKind.spouse,
               ),
               onTapPerson: (id) => _navigateToPerson(context, id),
+              onRemovePerson: (p) => _handleRemoveRelationship(
+                context,
+                otherPerson: p,
+                kind: RelationshipModalKind.spouse,
+              ),
             ),
             const SizedBox(height: 16),
             _RelationSection(
@@ -239,6 +289,11 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
                 kind: RelationshipModalKind.child,
               ),
               onTapPerson: (id) => _navigateToPerson(context, id),
+              onRemovePerson: (p) => _handleRemoveRelationship(
+                context,
+                otherPerson: p,
+                kind: RelationshipModalKind.child,
+              ),
             ),
             const SizedBox(height: 16),
             _RelationSection(
@@ -253,6 +308,11 @@ class _PersonDetailContentState extends State<_PersonDetailContent> {
                 kind: RelationshipModalKind.parent,
               ),
               onTapPerson: (id) => _navigateToPerson(context, id),
+              onRemovePerson: (p) => _handleRemoveRelationship(
+                context,
+                otherPerson: p,
+                kind: RelationshipModalKind.parent,
+              ),
             ),
             const SizedBox(height: 16),
             Align(
@@ -277,6 +337,7 @@ class _RelationSection extends StatelessWidget {
     required this.addLabel,
     required this.onAdd,
     required this.onTapPerson,
+    required this.onRemovePerson,
   });
 
   final String title;
@@ -285,6 +346,11 @@ class _RelationSection extends StatelessWidget {
   final String addLabel;
   final VoidCallback onAdd;
   final void Function(String personId) onTapPerson;
+
+  /// Xoá quan hệ với người này (KHÔNG xoá người) — vd lỡ chọn nhầm người
+  /// hay nhầm loại quan hệ (con/cha mẹ) lúc thêm, sửa lại nhanh mà không
+  /// phải xoá cả người rồi tạo lại từ đầu.
+  final void Function(Person person) onRemovePerson;
 
   @override
   Widget build(BuildContext context) {
@@ -317,9 +383,11 @@ class _RelationSection extends StatelessWidget {
             runSpacing: 4,
             children: [
               for (final p in people)
-                ActionChip(
+                InputChip(
                   label: Text(p.fullName),
                   onPressed: () => onTapPerson(p.id),
+                  onDeleted: () => onRemovePerson(p),
+                  deleteIcon: const Icon(Icons.close, size: 16),
                 ),
             ],
           ),

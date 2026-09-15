@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/l10n/app_localizations.dart';
 import '../core/providers/family_tree_list_provider.dart';
 import '../core/widgets/confirm_dialog.dart';
+import '../core/widgets/sort_menu_button.dart';
 import '../models/index.dart';
 import 'modals/family_tree_form_modal.dart';
 import 'modals/settings_modal.dart';
@@ -22,6 +23,7 @@ class MobilePortraitTreeListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.treeListTitle),
         actions: [
+          const SortMenuButton(),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => showSettingsModal(context),

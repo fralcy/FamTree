@@ -3,6 +3,11 @@
   "appTitle": "Family Tree",
 
   "treeListTitle": "Family trees",
+  "sortBy": "Sort",
+  "sortNameAsc": "Name A → Z",
+  "sortNameDesc": "Name Z → A",
+  "sortNewestFirst": "Newest first",
+  "sortOldestFirst": "Oldest first",
   "treeListEmpty": "No family trees yet. Tap + to create one.",
   "createTree": "Create family tree",
   "editTree": "Edit tree info",

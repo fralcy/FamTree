@@ -4,6 +4,11 @@
   "@appTitle": { "description": "Tên ứng dụng" },
 
   "treeListTitle": "Danh sách cây gia phả",
+  "sortBy": "Sắp xếp",
+  "sortNameAsc": "Tên A → Z",
+  "sortNameDesc": "Tên Z → A",
+  "sortNewestFirst": "Mới tạo trước",
+  "sortOldestFirst": "Cũ tạo trước",
   "treeListEmpty": "Chưa có cây gia phả nào. Nhấn + để tạo cây mới.",
   "createTree": "Tạo cây mới",
   "editTree": "Sửa thông tin cây",

@@ -43,6 +43,19 @@
   -->
   <script src="flutter_bootstrap.js" async></script>
   <script>
+    // flutter_service_worker.js do Flutter SDK tự sinh hiện RỖNG (chỉ tự
+    // unregister() ngay khi activate — Flutter đang bỏ dần cơ chế cache SW
+    // built-in, xem https://github.com/flutter/flutter/issues/156910), nên
+    // tự đăng ký 1 service worker riêng (app_sw.js) để app dùng offline
+    // được — độc lập với flutter_bootstrap.js, không phụ thuộc Flutter có
+    // giữ tính năng đó hay không ở các bản sau.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('app_sw.js').catch(function () {});
+      });
+    }
+  </script>
+  <script>
     // GitHub Pages không cho set header cache-control, nên trình duyệt có
     // thể giữ bản JS cũ dù đã deploy bản mới. Chạy đúng 1 lần mỗi khi mở
     // app: so sánh "dấu vân tay" bootstrap script với lần mở trước, khác
